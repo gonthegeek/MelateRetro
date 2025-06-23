@@ -30,4 +30,4 @@ jobs:
           FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
           FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
           APP_ID: ${{ secrets.APP_ID }}
-        run: python python_firebase_scraper.py # ¡Importante! Reemplaza esto con el nombre real de tu script de Python
+        run: python firebase_scraper.py 
