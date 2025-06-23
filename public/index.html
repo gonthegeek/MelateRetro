@@ -989,7 +989,7 @@
           if (results.length > 0) {
             const suggestionsToSave = results.map((r) => ({
               ...r,
-              combinacion: r.combination,
+              combinacion: JSON.stringify(r.combination), // CORRECCIÓN: Guardar como string
               sorteo_sugerido_para: fullHistory[0].sorteo + 1,
               fecha_generacion: new Date(),
             }));
@@ -1202,7 +1202,7 @@
           select.addEventListener("change", (e) =>
             handleReviewSelection(e.target.value, suggestionsByDraw)
           );
-          handleReviewSelection(select.value, suggestionsByDraw); // Cargar el primero por defecto
+          handleReviewSelection(select.value, suggestionsByDraw);
         } catch (e) {
           console.error("Error cargando sugerencias:", e);
           document.getElementById(
@@ -1237,11 +1237,32 @@
           .join("")}</div>`;
 
         suggestions.forEach((sug) => {
-          const suggestedCombo = JSON.parse(sug.combinacion);
+          let suggestedCombo;
+          try {
+            // CORRECCIÓN: Manejar tanto strings como arrays.
+            if (typeof sug.combinacion === "string") {
+              suggestedCombo = JSON.parse(sug.combinacion);
+            } else if (Array.isArray(sug.combinacion)) {
+              suggestedCombo = sug.combinacion;
+            } else {
+              console.error(
+                "Formato de combinación no reconocido:",
+                sug.combinacion
+              );
+              return; // Saltar esta sugerencia
+            }
+          } catch (e) {
+            console.error(
+              "Error al parsear la combinación:",
+              sug.combinacion,
+              e
+            );
+            return; // Saltar esta sugerencia si el parseo falla
+          }
+
           const hits = suggestedCombo.filter((n) =>
             winningCombo.includes(n)
           ).length;
-
           const { breakdown: sugBreakdown } = rateCombination(suggestedCombo);
           const { breakdown: winBreakdown } = rateCombination(winningCombo);
 
