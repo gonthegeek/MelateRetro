@@ -155,9 +155,15 @@
         import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Configuración de Firebase
-        const firebaseConfig = {
-            // PEGA AQUÍ EL OBJETO firebaseConfig DE TU PROYECTO
-        };
+const firebaseConfig = {
+  apiKey: "AIzaSyB3zfGgO63gc1VoWzQLeRsD09aoBMOazpg",
+  authDomain: "analizadormelateretro.firebaseapp.com",
+  projectId: "analizadormelateretro",
+  storageBucket: "analizadormelateretro.firebasestorage.app",
+  messagingSenderId: "852396148354",
+  appId: "1:852396148354:web:fc430c9d8ffdb19ce1d69b",
+  measurementId: "G-E0Z2VFNLT2"
+};
         const appId = firebaseConfig.appId;
 
         const app = initializeApp(firebaseConfig);
