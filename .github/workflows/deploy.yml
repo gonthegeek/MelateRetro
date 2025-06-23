@@ -1,0 +1,26 @@
+# Nombre del flujo de trabajo
+name: Deploy to Firebase Hosting
+
+# Define cuándo se ejecutará la acción
+on:
+  push:
+    branches:
+      - main  # Se ejecuta cada vez que haces push a la rama 'main'
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest # Se ejecuta en un servidor virtual con Ubuntu
+
+    steps:
+      # 1. Clona tu repositorio en el servidor virtual
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Configura la acción para desplegar en Firebase
+      - name: Deploy to Firebase Hosting
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_ANALIZADORMELATERETRO }}
+          channelId: live
+          projectId: analizadormelateretro
