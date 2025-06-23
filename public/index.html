@@ -300,7 +300,6 @@
     </div>
 
     <script type="module">
-      // Importaciones de Firebase
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
       import {
         getAuth,
@@ -320,7 +319,6 @@
         writeBatch,
       } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-      // Configuración de Firebase
       const firebaseConfig = {
         apiKey: "AIzaSyB3zfGgO63gc1VoWzQLeRsD09aoBMOazpg",
         authDomain: "analizadormelateretro.firebaseapp.com",
@@ -344,18 +342,20 @@
         db,
         `artifacts/${appId}/public/data/config/strategyWeights`
       );
+      const lastAnalyzedDocRef = doc(
+        db,
+        `artifacts/${appId}/public/data/config/lastAnalyzedDraw`
+      );
 
       let fullHistory = [];
       let analysis = {};
       let strategyWeights = {};
+      let lastAnalyzedDrawNumber = 0;
 
-      // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
       window.addEventListener("DOMContentLoaded", () => {
-        const loginForm = document.getElementById("login-form");
-        if (loginForm) {
-          loginForm.addEventListener("submit", handleLogin);
-        }
-
+        document
+          .getElementById("login-form")
+          ?.addEventListener("submit", handleLogin);
         onAuthStateChanged(auth, (user) => {
           if (user) {
             document.getElementById("login-container").classList.add("hidden");
@@ -373,10 +373,10 @@
         });
         document
           .getElementById("btn-logout")
-          .addEventListener("click", () => signOut(auth));
+          ?.addEventListener("click", () => signOut(auth));
         document
           .getElementById("btn-close-notification")
-          .addEventListener("click", () => {
+          ?.addEventListener("click", () => {
             document
               .getElementById("notification-modal")
               .classList.add("hidden");
@@ -391,12 +391,10 @@
         loadingOverlay.classList.remove("hidden");
         loadingOverlay.querySelector("#loading-message").textContent =
           "Autenticando...";
-
         try {
           await signInWithEmailAndPassword(auth, email, password);
         } catch (error) {
-          console.error("Error de inicio de sesión:", error);
-          showNotification(`Error de inicio de sesión: ${error.message}`);
+          showNotification(`Error de inicio de sesión: ${error.code}`);
         } finally {
           loadingOverlay.classList.add("hidden");
         }
@@ -407,29 +405,37 @@
         try {
           loadingOverlay.classList.remove("hidden");
           loadingOverlay.querySelector("#loading-message").textContent =
-            "Cargando datos históricos...";
+            "Cargando datos...";
 
-          const querySnapshot = await getDocs(
-            query(resultsCollectionRef, orderBy("sorteo", "desc"))
-          );
-          fullHistory = querySnapshot.docs.map((doc) => ({
+          const [resultsSnapshot, weightsDoc, lastAnalyzedDoc] =
+            await Promise.all([
+              getDocs(query(resultsCollectionRef, orderBy("sorteo", "desc"))),
+              getDoc(configDocRef),
+              getDoc(lastAnalyzedDocRef),
+            ]);
+
+          fullHistory = resultsSnapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
           }));
 
-          if (fullHistory.length > 0) {
-            loadingOverlay.querySelector("#loading-message").textContent =
-              "Cargando configuración...";
-            const docSnap = await getDoc(configDocRef);
-            strategyWeights = docSnap.exists()
-              ? docSnap.data()
-              : {
-                  suma_rango: 30,
-                  dist_par_impar: 25,
-                  mix_frio_caliente: 25,
-                  pares_frecuentes: 20,
-                };
+          if (weightsDoc.exists()) {
+            strategyWeights = weightsDoc.data();
+          } else {
+            strategyWeights = {
+              suma_rango: 30,
+              dist_par_impar: 25,
+              mix_frio_caliente: 25,
+              pares_frecuentes: 20,
+            };
+            await setDoc(configDocRef, strategyWeights);
+          }
 
+          if (lastAnalyzedDoc.exists()) {
+            lastAnalyzedDrawNumber = lastAnalyzedDoc.data().sorteo;
+          }
+
+          if (fullHistory.length > 0) {
             loadingOverlay.querySelector("#loading-message").textContent =
               "Realizando análisis...";
             performFullAnalysis();
@@ -437,7 +443,6 @@
             displayLatestResult();
             document.getElementById("main-content").classList.remove("hidden");
             document.getElementById("upload-container").classList.add("hidden");
-
             switchView("stats-dashboard");
             displayStats();
           } else {
@@ -460,7 +465,6 @@
         }
       }
 
-      // --- MANEJO DE CARGA DE CSV ---
       function setupUploadListeners() {
         const uploadButton = document.getElementById("btn-trigger-upload");
         const fileInput = document.getElementById("csv-file-input");
@@ -545,7 +549,6 @@
         }
       }
 
-      // --- LÓGICA DE ANÁLISIS, GENERACIÓN Y APRENDIZAJE ---
       function performFullAnalysis() {
         const allNumbers = fullHistory.flatMap((draw) => [
           draw.F1,
@@ -730,6 +733,7 @@
           confidence: "(Estrategia Simple)",
         }));
       }
+
       async function adjustStrategy() {
         if (fullHistory.length < 2) {
           showNotification(
@@ -737,21 +741,29 @@
           );
           return;
         }
-        const lastDraw = fullHistory[0];
+        const lastDrawInDb = fullHistory[0];
+        if (lastDrawInDb.sorteo <= lastAnalyzedDrawNumber) {
+          showNotification(
+            `La estrategia ya fue ajustada con el sorteo ${lastDrawInDb.sorteo}. Espera un nuevo resultado.`
+          );
+          return;
+        }
+
         const winningCombo = [
-          lastDraw.F1,
-          lastDraw.F2,
-          lastDraw.F3,
-          lastDraw.F4,
-          lastDraw.F5,
-          lastDraw.F6,
+          lastDrawInDb.F1,
+          lastDrawInDb.F2,
+          lastDrawInDb.F3,
+          lastDrawInDb.F4,
+          lastDrawInDb.F5,
+          lastDrawInDb.F6,
         ].sort((a, b) => a - b);
         showNotification(
-          `Analizando sorteo ${lastDraw.sorteo} para mejorar estrategia...`
+          `Analizando sorteo ${lastDrawInDb.sorteo} para mejorar estrategia...`
         );
         const increaseFactor = 1.01;
         const decreaseFactor = 0.99;
         let changes = [];
+
         const winSum = winningCombo.reduce((a, b) => a + b, 0);
         if (
           winSum >= analysis.sumAnalysis.q25 &&
@@ -763,6 +775,7 @@
           strategyWeights.suma_rango *= decreaseFactor;
           changes.push("Suma fuera de rango: Peso reducido.");
         }
+
         const evens = winningCombo.filter((n) => n % 2 === 0).length;
         const distStr = `${evens}P-${6 - evens}I`;
         if (analysis.topOddEven.includes(distStr)) {
@@ -772,12 +785,15 @@
           strategyWeights.dist_par_impar *= decreaseFactor;
           changes.push(`Distribución ${distStr} no es común: Peso reducido.`);
         }
+
         try {
           await setDoc(configDocRef, strategyWeights);
+          await setDoc(lastAnalyzedDocRef, { sorteo: lastDrawInDb.sorteo });
+          lastAnalyzedDrawNumber = lastDrawInDb.sorteo; // Update state
           showNotification("¡Estrategia mejorada!\n" + changes.join("\n"));
           displayStrategyWeights();
         } catch (e) {
-          console.error("Error al guardar nuevos pesos: ", e);
+          console.error("Error al guardar la mejora: ", e);
           showNotification("Error al guardar la mejora de la estrategia.");
         }
       }
@@ -1097,7 +1113,6 @@
         const maxScore =
           Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
         let breakdown = {};
-
         const freqs = analysis.frequencies;
         const cold = new Set(freqs.slice(-13).map((f) => f.number));
         const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
@@ -1105,7 +1120,6 @@
           analysis.frequencies.slice(13, 26).map((f) => f.number)
         );
         const comboSet = new Set(comboArr);
-
         let sumaScore = 0;
         if (
           sum(comboArr) >= analysis.sumAnalysis.q25 &&
@@ -1114,14 +1128,12 @@
           sumaScore = strategyWeights.suma_rango;
         score += sumaScore;
         breakdown["Regla de Suma"] = sumaScore;
-
         let parImparScore = 0;
         const evens = comboArr.filter((n) => n % 2 === 0).length;
         if (analysis.topOddEven.includes(`${evens}P-${6 - evens}I`))
           parImparScore = strategyWeights.dist_par_impar;
         score += parImparScore;
         breakdown["Regla Par/Impar"] = parImparScore;
-
         let mixScore = 0;
         const coldCount = comboArr.filter((n) => cold.has(n)).length;
         const hotCount = comboArr.filter((n) => hot.has(n)).length;
@@ -1130,7 +1142,6 @@
           mixScore = strategyWeights.mix_frio_caliente;
         score += mixScore;
         breakdown["Mix Frío/Caliente/Medio"] = mixScore;
-
         let pairScore = 0;
         let pairHits = 0;
         for (const pair of combinations(comboArr, 2)) {
@@ -1139,7 +1150,6 @@
         pairScore = Math.min(pairHits * 5, strategyWeights.pares_frecuentes);
         score += pairScore;
         breakdown["Pares Frecuentes"] = pairScore;
-
         const confidence = (score / maxScore) * 100;
         return { confidence, breakdown };
       }
