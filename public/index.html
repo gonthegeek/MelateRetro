@@ -1,634 +1,331 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador Estadístico Melate Retro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-      body {
-        font-family: "Inter", sans-serif;
-      }
-      .stat-card {
-        background-color: #1f2937;
-        border: 1px solid #374151;
-      }
-      .hot-number {
-        background-color: #dc2626;
-        color: white;
-      }
-      .cold-number {
-        background-color: #3b82f6;
-        color: white;
-      }
-      .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.6);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-      }
-      .number-ball {
-        width: 2.5rem;
-        height: 2.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        font-weight: bold;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4),
-          0 2px 3px rgba(0, 0, 0, 0.2);
-      }
+        body { font-family: 'Inter', sans-serif; }
+        .stat-card { background-color: #1F2937; border: 1px solid #374151; }
+        .hot-number { background-color: #DC2626; color: white; }
+        .cold-number { background-color: #3B82F6; color: white; }
+        .modal-backdrop {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .number-ball {
+            width: 2.5rem; height: 2.5rem;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; font-weight: bold;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 2px 3px rgba(0,0,0,0.2);
+        }
     </style>
-  </head>
-  <body class="bg-gray-900 text-gray-200">
-    <div
-      id="loading-overlay"
-      class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 flex justify-center items-center z-50"
-    >
-      <div class="flex flex-col items-center">
-        <i class="fas fa-spinner fa-spin fa-3x text-indigo-500"></i>
-        <p id="loading-message" class="mt-4 text-lg">Cargando...</p>
-      </div>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 flex justify-center items-center z-50">
+        <div class="flex flex-col items-center">
+            <i class="fas fa-spinner fa-spin fa-3x text-indigo-500"></i>
+            <p id="loading-message" class="mt-4 text-lg">Cargando...</p>
+        </div>
+    </div>
+    
+    <!-- Contenedor de Login -->
+    <div id="login-container" class="min-h-screen flex items-center justify-center">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
+            <h2 class="text-3xl font-bold text-center text-white mb-6">Iniciar Sesión</h2>
+            <p class="text-center text-gray-400 mb-6">Introduce tus credenciales para acceder al analizador.</p>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="email" class="block text-gray-300 mb-2">Correo Electrónico</label>
+                    <input type="email" id="email" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-300 mb-2">Contraseña</label>
+                    <input type="password" id="password" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">
+                    Acceder
+                </button>
+            </form>
+        </div>
     </div>
 
-    <!-- Contenedor de Login -->
-    <div
-      id="login-container"
-      class="min-h-screen flex items-center justify-center"
-    >
-      <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
-        <h2 class="text-3xl font-bold text-center text-white mb-6">
-          Iniciar Sesión
-        </h2>
-        <p class="text-center text-gray-400 mb-6">
-          Introduce tus credenciales para acceder al analizador.
-        </p>
-        <form id="login-form">
-          <div class="mb-4">
-            <label for="email" class="block text-gray-300 mb-2"
-              >Correo Electrónico</label
-            >
-            <input
-              type="email"
-              id="email"
-              class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
-          <div class="mb-6">
-            <label for="password" class="block text-gray-300 mb-2"
-              >Contraseña</label
-            >
-            <input
-              type="password"
-              id="password"
-              class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105"
-          >
-            Acceder
-          </button>
-        </form>
-      </div>
-    </div>
 
     <!-- Contenedor Principal de la App (Oculto por defecto) -->
-    <div
-      id="app-container"
-      class="hidden container mx-auto p-4 md:p-8 max-w-7xl"
-    >
-      <header class="flex justify-between items-center mb-8">
-        <div class="text-left">
-          <h1
-            class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500"
-          >
-            Analizador Estadístico
-          </h1>
-          <p class="text-gray-400 mt-2">
-            Bienvenido. Explora patrones y genera sugerencias.
-          </p>
-          <div id="auth-status" class="mt-4 text-xs text-gray-500"></div>
-        </div>
-        <button
-          id="btn-logout"
-          class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg flex items-center"
-        >
-          <i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión
-        </button>
-      </header>
+    <div id="app-container" class="hidden container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="flex justify-between items-center mb-8">
+            <div class="text-left">
+                <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">
+                    Analizador Estadístico
+                </h1>
+                <p class="text-gray-400 mt-2">Bienvenido. Explora patrones y genera sugerencias.</p>
+                 <div id="auth-status" class="mt-4 text-xs text-gray-500"></div>
+            </div>
+            <button id="btn-logout" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg flex items-center">
+                <i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión
+            </button>
+        </header>
 
-      <main id="main-content">
-        <!-- Tarjeta del Último Sorteo -->
-        <div
-          id="latest-draw-card"
-          class="mb-8 p-6 bg-gray-800 rounded-lg shadow-xl border border-indigo-500/50"
-        >
-          <h2 class="text-2xl font-bold text-indigo-400 mb-4">
-            Último Sorteo Registrado
-          </h2>
-          <div id="latest-draw-content">
-            <!-- Contenido se llenará con JS -->
-          </div>
-        </div>
-
-        <!-- Controles Principales -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <button
-            id="btn-show-stats"
-            class="bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
-          >
-            <i class="fas fa-chart-pie mr-3"></i>Estadísticas
-          </button>
-          <button
-            id="btn-show-history"
-            class="bg-blue-600 hover:bg-blue-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
-          >
-            <i class="fas fa-history mr-3"></i>Histórico
-          </button>
-          <button
-            id="btn-show-generator"
-            class="bg-purple-600 hover:bg-purple-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
-          >
-            <i class="fas fa-magic-wand-sparkles mr-3"></i>Generador
-          </button>
-          <button
-            id="btn-show-verifier"
-            class="bg-teal-600 hover:bg-teal-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
-          >
-            <i class="fas fa-tasks mr-3"></i>Verificador
-          </button>
-          <button
-            id="btn-adjust-strategy"
-            class="bg-amber-600 hover:bg-amber-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
-          >
-            <i class="fas fa-brain mr-3"></i>Mejorar
-          </button>
-          <button
-            id="btn-upload-csv"
-            class="bg-green-600 hover:bg-green-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
-          >
-            <i class="fas fa-upload mr-3"></i>Cargar CSV
-          </button>
-        </div>
-
-        <!-- Dashboard de Estadísticas -->
-        <div id="stats-dashboard" class="hidden">
-          <h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">
-            Dashboard de Estadísticas
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-fire mr-2 text-red-500"></i>Frecuencia de
-                Números
-              </h3>
-              <div class="flex justify-between">
-                <div>
-                  <h4 class="font-bold text-red-400">🔥 Calientes</h4>
-                  <div id="hot-numbers" class="flex flex-wrap gap-2 mt-2"></div>
+        <main id="main-content">
+            <!-- Tarjeta del Último Sorteo -->
+            <div id="latest-draw-card" class="mb-8 p-6 bg-gray-800 rounded-lg shadow-xl border border-indigo-500/50">
+                <h2 class="text-2xl font-bold text-indigo-400 mb-4">Último Sorteo Registrado</h2>
+                <div id="latest-draw-content">
+                    <!-- Contenido se llenará con JS -->
                 </div>
-                <div>
-                  <h4 class="font-bold text-blue-400">❄️ Fríos</h4>
-                  <div
-                    id="cold-numbers"
-                    class="flex flex-wrap gap-2 mt-2"
-                  ></div>
+            </div>
+
+            <!-- Controles Principales -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+                <button id="btn-show-stats" class="bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
+                    <i class="fas fa-chart-pie mr-3"></i>Estadísticas
+                </button>
+                <button id="btn-show-history" class="bg-blue-600 hover:bg-blue-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
+                    <i class="fas fa-history mr-3"></i>Histórico
+                </button>
+                <button id="btn-show-generator" class="bg-purple-600 hover:bg-purple-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
+                    <i class="fas fa-magic-wand-sparkles mr-3"></i>Generador
+                </button>
+                 <button id="btn-show-verifier" class="bg-teal-600 hover:bg-teal-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
+                    <i class="fas fa-tasks mr-3"></i>Verificador
+                </button>
+                <button id="btn-adjust-strategy" class="bg-amber-600 hover:bg-amber-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
+                    <i class="fas fa-brain mr-3"></i>Mejorar
+                </button>
+                 <button id="btn-upload-csv" class="bg-green-600 hover:bg-green-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
+                    <i class="fas fa-upload mr-3"></i>Cargar CSV
+                </button>
+            </div>
+
+            <!-- Dashboard de Estadísticas -->
+            <div id="stats-dashboard" class="hidden">
+                 <h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">Dashboard de Estadísticas</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="stat-card p-4 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-3"><i class="fas fa-fire mr-2 text-red-500"></i>Frecuencia de Números</h3>
+                        <div class="flex justify-between">
+                            <div><h4 class="font-bold text-red-400">🔥 Calientes</h4><div id="hot-numbers" class="flex flex-wrap gap-2 mt-2"></div></div>
+                            <div><h4 class="font-bold text-blue-400">❄️ Fríos</h4><div id="cold-numbers" class="flex flex-wrap gap-2 mt-2"></div></div>
+                        </div>
+                    </div>
+                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-hourglass-half mr-2 text-yellow-500"></i>Atraso de Números</h3><div id="atraso-numbers"></div></div>
+                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-link mr-2 text-green-500"></i>Pares Más Frecuentes</h3><div id="top-pairs"></div></div>
+                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-calculator mr-2 text-cyan-500"></i>Análisis de Sumas</h3><div id="sum-analysis"></div></div>
+                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-divide mr-2 text-pink-500"></i>Pares e Impares</h3><div id="odd-even-analysis"></div></div>
+                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-balance-scale mr-2 text-orange-500"></i>Pesos de Estrategia</h3><div id="strategy-weights"></div></div>
                 </div>
-              </div>
             </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-hourglass-half mr-2 text-yellow-500"></i>Atraso
-                de Números
-              </h3>
-              <div id="atraso-numbers"></div>
-            </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-link mr-2 text-green-500"></i>Pares Más
-                Frecuentes
-              </h3>
-              <div id="top-pairs"></div>
-            </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-calculator mr-2 text-cyan-500"></i>Análisis de
-                Sumas
-              </h3>
-              <div id="sum-analysis"></div>
-            </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-divide mr-2 text-pink-500"></i>Pares e Impares
-              </h3>
-              <div id="odd-even-analysis"></div>
-            </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-balance-scale mr-2 text-orange-500"></i>Pesos
-                de Estrategia
-              </h3>
-              <div id="strategy-weights"></div>
-            </div>
-          </div>
-        </div>
+            
+            <!-- Contenedor del Histórico -->
+            <div id="history-container" class="hidden"></div>
+             
+             <!-- Contenedor para Generador y Verificador -->
+            <div id="interactive-container" class="hidden mt-8"></div>
 
-        <!-- Contenedor del Histórico -->
-        <div id="history-container" class="hidden"></div>
-
-        <!-- Contenedor para Generador y Verificador -->
-        <div id="interactive-container" class="mt-8 hidden"></div>
-
-        <div
-          id="upload-container"
-          class="hidden text-center mt-16 p-8 bg-gray-800 rounded-lg border-2 border-dashed border-gray-600"
-        >
-          <i class="fas fa-database fa-3x text-gray-500 mb-4"></i>
-          <h2 class="text-2xl font-bold mb-2">Base de Datos Vacía</h2>
-          <p class="text-gray-400 mb-6">
-            Para comenzar, por favor carga el archivo CSV con los resultados
-            históricos de Melate Retro.
-          </p>
-          <button
-            id="btn-trigger-upload"
-            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105"
-          >
-            <i class="fas fa-upload mr-2"></i>Seleccionar archivo CSV
-          </button>
-          <input type="file" id="csv-file-input" class="hidden" accept=".csv" />
-        </div>
-      </main>
+            <div id="upload-container" class="hidden text-center mt-16 p-8 bg-gray-800 rounded-lg border-2 border-dashed border-gray-600">
+                <i class="fas fa-database fa-3x text-gray-500 mb-4"></i>
+                <h2 class="text-2xl font-bold mb-2">Base de Datos Vacía</h2>
+                <p class="text-gray-400 mb-6">Para comenzar, por favor carga el archivo CSV con los resultados históricos de Melate Retro.</p>
+                <button id="btn-trigger-upload" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                    <i class="fas fa-upload mr-2"></i>Seleccionar archivo CSV
+                </button>
+                <input type="file" id="csv-file-input" class="hidden" accept=".csv">
+            </div>
+        </main>
     </div>
 
     <!-- Modal para notificaciones -->
     <div id="notification-modal" class="hidden modal-backdrop">
-      <div
-        class="bg-gray-800 p-6 rounded-lg shadow-2xl max-w-sm w-full text-center"
-      >
-        <p id="notification-message" class="text-lg whitespace-pre-wrap"></p>
-        <button
-          id="btn-close-notification"
-          class="mt-6 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-semibold"
-        >
-          Cerrar
-        </button>
-      </div>
+        <div class="bg-gray-800 p-6 rounded-lg shadow-2xl max-w-sm w-full text-center">
+            <p id="notification-message" class="text-lg whitespace-pre-wrap"></p>
+            <button id="btn-close-notification" class="mt-6 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-semibold">Cerrar</button>
+        </div>
     </div>
 
     <script type="module">
-      // Importaciones de Firebase
-      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-      import {
-        getAuth,
-        signInWithEmailAndPassword,
-        onAuthStateChanged,
-        signOut,
-      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-      import {
-        getFirestore,
-        collection,
-        getDocs,
-        doc,
-        getDoc,
-        setDoc,
-        query,
-        orderBy,
-        writeBatch,
-      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // Importaciones de Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-      // Configuración de Firebase
-      const firebaseConfig = {
-        apiKey: "AIzaSyB3zfGgO63gc1VoWzQLeRsD09aoBMOazpg",
-        authDomain: "analizadormelateretro.firebaseapp.com",
-        projectId: "analizadormelateretro",
-        storageBucket: "analizadormelateretro.firebasestorage.app",
-        messagingSenderId: "852396148354",
-        appId: "1:852396148354:web:fc430c9d8ffdb19ce1d69b",
-        measurementId: "G-E0Z2VFNLT2",
-      };
-      const appId = firebaseConfig.appId;
+        // Configuración de Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyB3zfGgO63gc1VoWzQLeRsD09aoBMOazpg",
+  authDomain: "analizadormelateretro.firebaseapp.com",
+  projectId: "analizadormelateretro",
+  storageBucket: "analizadormelateretro.firebasestorage.app",
+  messagingSenderId: "852396148354",
+  appId: "1:852396148354:web:fc430c9d8ffdb19ce1d69b",
+  measurementId: "G-E0Z2VFNLT2"
+};
+        const appId = firebaseConfig.appId;
 
-      const app = initializeApp(firebaseConfig);
-      const auth = getAuth(app);
-      const db = getFirestore(app);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        const resultsCollectionRef = collection(db, `artifacts/${appId}/public/data/results`);
+        const configDocRef = doc(db, `artifacts/${appId}/public/data/config/strategyWeights`);
+        
+        let fullHistory = [];
+        let analysis = {};
+        let strategyWeights = {};
 
-      const resultsCollectionRef = collection(
-        db,
-        `artifacts/${appId}/public/data/results`
-      );
-      const configDocRef = doc(
-        db,
-        `artifacts/${appId}/public/data/config/strategyWeights`
-      );
+        // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
+        window.addEventListener('DOMContentLoaded', () => { /* ... sin cambios ... */ });
+        async function handleLogin(e) { /* ... sin cambios ... */ }
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-      let fullHistory = [];
-      let analysis = {};
-      let strategyWeights = {};
+        async function loadInitialData() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            try {
+                loadingOverlay.classList.remove('hidden');
+                loadingOverlay.querySelector('#loading-message').textContent = 'Cargando datos históricos...';
+                
+                const querySnapshot = await getDocs(query(resultsCollectionRef, orderBy("sorteo", "desc")));
+                fullHistory = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
-      window.addEventListener("DOMContentLoaded", () => {
-        const loginForm = document.getElementById("login-form");
-        loginForm.addEventListener("submit", handleLogin);
-
-        onAuthStateChanged(auth, (user) => {
-          if (user) {
-            document.getElementById("login-container").classList.add("hidden");
-            document.getElementById("app-container").classList.remove("hidden");
-            document.getElementById(
-              "auth-status"
-            ).textContent = `Usuario: ${user.email}`;
-            loadInitialData();
-          } else {
-            document
-              .getElementById("login-container")
-              .classList.remove("hidden");
-            document.getElementById("app-container").classList.add("hidden");
-          }
-        });
-      });
-
-      async function handleLogin(e) {
-        /* ... sin cambios ... */
-      }
-      document
-        .getElementById("btn-logout")
-        .addEventListener("click", () => signOut(auth));
-
-      async function loadInitialData() {
-        const loadingOverlay = document.getElementById("loading-overlay");
-        try {
-          loadingOverlay.classList.remove("hidden");
-          loadingOverlay.querySelector("#loading-message").textContent =
-            "Cargando datos históricos...";
-
-          const querySnapshot = await getDocs(
-            query(resultsCollectionRef, orderBy("sorteo", "desc"))
-          );
-          fullHistory = querySnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
-          if (fullHistory.length > 0) {
-            loadingOverlay.querySelector("#loading-message").textContent =
-              "Cargando configuración...";
-            const docSnap = await getDoc(configDocRef);
-            strategyWeights = docSnap.exists()
-              ? docSnap.data()
-              : {
-                  suma_rango: 30,
-                  dist_par_impar: 25,
-                  mix_frio_caliente: 25,
-                  pares_frecuentes: 20,
-                };
-
-            loadingOverlay.querySelector("#loading-message").textContent =
-              "Realizando análisis...";
-            performFullAnalysis();
-            setupUI();
-            displayLatestResult();
-            document.getElementById("main-content").classList.remove("hidden");
-            document.getElementById("upload-container").classList.add("hidden");
-          } else {
-            document
-              .getElementById("upload-container")
-              .classList.remove("hidden");
-            setupUploadListeners();
-          }
-        } catch (error) {
-          console.error("Error al cargar datos iniciales:", error);
-          showNotification(
-            `No se pudieron cargar los datos desde Firebase. Causa: ${error.message}`
-          );
-          document
-            .getElementById("upload-container")
-            .classList.remove("hidden");
-          setupUploadListeners();
-        } finally {
-          loadingOverlay.classList.add("hidden");
-        }
-      }
-
-      // --- MANEJO DE CARGA DE CSV ---
-      function setupUploadListeners() {
-        /* ... sin cambios ... */
-      }
-      function handleFileUpload(event) {
-        /* ... sin cambios ... */
-      }
-      async function parseAndUploadCSV(csvText) {
-        /* ... sin cambios ... */
-      }
-
-      // --- LÓGICA DE ANÁLISIS, GENERACIÓN Y APRENDIZAJE ---
-      function performFullAnalysis() {
-        /* ... sin cambios ... */
-      }
-      function generateIntelligentCombinations(quantity) {
-        /* ... sin cambios ... */
-      }
-      function generateSimpleCombinations(quantity, strategy) {
-        /* ... sin cambios ... */
-      }
-      async function adjustStrategy() {
-        /* ... sin cambios ... */
-      }
-
-      // --- RENDERIZADO DE UI ---
-      function setupUI() {
-        const mainViews = [
-          "stats-dashboard",
-          "history-container",
-          "interactive-container",
-        ];
-
-        const switchView = (viewIdToShow) => {
-          mainViews.forEach((id) => {
-            const el = document.getElementById(id);
-            if (id === viewIdToShow) {
-              el.classList.remove("hidden");
-            } else {
-              el.classList.add("hidden");
+                if (fullHistory.length > 0) {
+                    loadingOverlay.querySelector('#loading-message').textContent = 'Cargando configuración...';
+                    const docSnap = await getDoc(configDocRef);
+                    strategyWeights = docSnap.exists() ? docSnap.data() : { suma_rango: 30, dist_par_impar: 25, mix_frio_caliente: 25, pares_frecuentes: 20 };
+                    
+                    loadingOverlay.querySelector('#loading-message').textContent = 'Realizando análisis...';
+                    performFullAnalysis();
+                    setupUI();
+                    displayLatestResult();
+                    document.getElementById('main-content').classList.remove('hidden');
+                    document.getElementById('upload-container').classList.add('hidden');
+                    // Mostrar estadísticas por defecto al cargar
+                    document.getElementById('stats-dashboard').classList.remove('hidden');
+                    displayStats();
+                } else {
+                    document.getElementById('upload-container').classList.remove('hidden');
+                    setupUploadListeners();
+                }
+            } catch (error) {
+                console.error("Error al cargar datos iniciales:", error);
+                showNotification(`No se pudieron cargar los datos desde Firebase. Causa: ${error.message}`);
+                 document.getElementById('upload-container').classList.remove('hidden');
+                 setupUploadListeners();
+            } finally {
+                 loadingOverlay.classList.add('hidden');
             }
-          });
-          // Si la vista a mostrar no es un panel interactivo, lo limpiamos
-          if (viewIdToShow !== "interactive-container") {
-            document.getElementById("interactive-container").innerHTML = "";
-          }
-        };
+        }
+        
+        // --- MANEJO DE CARGA DE CSV ---
+        function setupUploadListeners() { /* ... sin cambios ... */ }
+        function handleFileUpload(event) { /* ... sin cambios ... */ }
+        async function parseAndUploadCSV(csvText) { /* ... sin cambios ... */ }
+        
+        // --- LÓGICA DE ANÁLISIS, GENERACIÓN Y APRENDIZAJE ---
+        function performFullAnalysis() { /* ... sin cambios ... */ }
+        function generateIntelligentCombinations(quantity) { /* ... sin cambios ... */ }
+        function generateSimpleCombinations(quantity, strategy) { /* ... sin cambios ... */ }
+        async function adjustStrategy() { /* ... sin cambios ... */ }
+        
+        // --- RENDERIZADO DE UI ---
+        function setupUI() {
+            const mainViews = ['stats-dashboard', 'history-container', 'interactive-container'];
 
-        document
-          .getElementById("btn-show-stats")
-          .addEventListener("click", () => {
-            switchView("stats-dashboard");
-            displayStats();
-          });
-        document
-          .getElementById("btn-show-history")
-          .addEventListener("click", () => {
-            switchView("history-container");
-            displayHistory();
-          });
-        document
-          .getElementById("btn-show-generator")
-          .addEventListener("click", () => {
-            switchView("interactive-container");
-            displayGenerator();
-          });
-        document
-          .getElementById("btn-show-verifier")
-          .addEventListener("click", () => {
-            switchView("interactive-container");
-            displayVerifier();
-          });
+            const switchView = (viewIdToShow) => {
+                mainViews.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) { // Verificar si el elemento existe
+                        if (id === viewIdToShow) {
+                            el.classList.remove('hidden');
+                        } else {
+                            el.classList.add('hidden');
+                        }
+                    }
+                });
+                // Limpiar el contenedor interactivo si no es la vista activa
+                if (viewIdToShow !== 'interactive-container') {
+                     document.getElementById('interactive-container').innerHTML = '';
+                }
+            };
 
-        document
-          .getElementById("btn-adjust-strategy")
-          .addEventListener("click", adjustStrategy);
-        document
-          .getElementById("btn-close-notification")
-          .addEventListener("click", () => {
-            document
-              .getElementById("notification-modal")
-              .classList.add("hidden");
-          });
-        setupUploadListeners();
-      }
-
-      function displayLatestResult() {
-        /* ... sin cambios ... */
-      }
-
-      function displayHistory() {
-        const container = document.getElementById("history-container");
-        let tableHTML = `
-                <h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">Histórico de Resultados</h2>
-                <div class="overflow-x-auto stat-card rounded-lg">
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-300 uppercase bg-gray-700">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">Sorteo</th>
-                                <th scope="col" class="px-6 py-3">Fecha</th>
-                                <th scope="col" class="px-6 py-3">Combinación Ganadora</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-        fullHistory.forEach((draw) => {
-          const numbers = [
-            draw.F1,
-            draw.F2,
-            draw.F3,
-            draw.F4,
-            draw.F5,
-            draw.F6,
-          ].join(", ");
-          tableHTML += `
-                    <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
-                        <td class="px-6 py-4 font-medium">${draw.sorteo}</td>
-                        <td class="px-6 py-4">${draw.FECHA}</td>
-                        <td class="px-6 py-4 font-mono">${numbers}</td>
-                    </tr>
+            document.getElementById('btn-show-stats').addEventListener('click', () => {
+                switchView('stats-dashboard');
+                displayStats();
+            });
+            document.getElementById('btn-show-history').addEventListener('click', () => {
+                switchView('history-container');
+                displayHistory();
+            });
+            document.getElementById('btn-show-generator').addEventListener('click', () => {
+                switchView('interactive-container');
+                displayGenerator();
+            });
+            document.getElementById('btn-show-verifier').addEventListener('click', () => {
+                switchView('interactive-container');
+                displayVerifier();
+            });
+            
+            document.getElementById('btn-adjust-strategy').addEventListener('click', adjustStrategy);
+            document.getElementById('btn-close-notification').addEventListener('click', () => {
+                document.getElementById('notification-modal').classList.add('hidden');
+            });
+            setupUploadListeners();
+        }
+        
+        function displayLatestResult() {
+            if (fullHistory.length === 0) return;
+            try {
+                const latest = fullHistory[0];
+                if (!latest || typeof latest.F1 === 'undefined') {
+                    console.error("El último sorteo no tiene datos válidos:", latest);
+                    return;
+                }
+                const numbers = [latest.F1, latest.F2, latest.F3, latest.F4, latest.F5, latest.F6];
+                const content = `
+                    <div class="flex flex-col md:flex-row justify-between items-center">
+                        <div>
+                            <p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${latest.sorteo}</span></p>
+                            <p class="text-gray-400">Fecha: <span class="font-bold text-white">${latest.FECHA}</span></p>
+                        </div>
+                        <div class="flex space-x-2 mt-4 md:mt-0">
+                             ${numbers.map(n => `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`).join('')}
+                        </div>
+                    </div>
                 `;
-        });
-        tableHTML += `</tbody></table></div>`;
-        container.innerHTML = tableHTML;
-      }
+                document.getElementById('latest-draw-content').innerHTML = content;
+            } catch (e) {
+                 console.error("Error al mostrar el último sorteo:", e);
+                 document.getElementById('latest-draw-content').innerHTML = `<p class="text-red-500">Error al cargar el último resultado.</p>`;
+            }
+        }
+        
+        function displayHistory() { /* ... sin cambios ... */ }
 
-      function displayStats() {
-        if (!analysis.frequencies) return;
-        document.getElementById("hot-numbers").innerHTML = analysis.frequencies
-          .slice(0, 5)
-          .map(
-            (item) =>
-              `<span class="hot-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`
-          )
-          .join("");
-        document.getElementById("cold-numbers").innerHTML = analysis.frequencies
-          .slice(-5)
-          .map(
-            (item) =>
-              `<span class="cold-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`
-          )
-          .join("");
-        document.getElementById("atraso-numbers").innerHTML = analysis.lags
-          .slice(0, 5)
-          .map(
-            (item) =>
-              `<div class="flex justify-between items-center text-sm mb-1"><span>Número <b>${item.number}</b>:</span> <span class="font-semibold">${item.lag} sorteos</span></div>`
-          )
-          .join("");
-        document.getElementById("top-pairs").innerHTML = analysis.topPairs
-          .slice(0, 5)
-          .map(
-            (item) =>
-              `<div class="flex justify-between items-center text-sm mb-1"><span>Par <b>${item.pair.join(
-                ", "
-              )}</b>:</span> <span class="font-semibold">${
-                item.count
-              } veces</span></div>`
-          )
-          .join("");
-        document.getElementById(
-          "sum-analysis"
-        ).innerHTML = `<p class="text-sm">Suma Promedio: <b>${analysis.sumAnalysis.mean}</b></p><p class="text-sm">Rango Frecuente (25%-75%): <b>${analysis.sumAnalysis.q25} - ${analysis.sumAnalysis.q75}</b></p>`;
-        document.getElementById("odd-even-analysis").innerHTML =
-          analysis.oddEvenDistribution
-            .slice(0, 3)
-            .map(
-              ([dist, count]) =>
-                `<div class="flex justify-between items-center text-sm mb-1"><span><b>${dist}</b>:</span> <span class="font-semibold">${count} veces</span></div>`
-            )
-            .join("");
-        displayStrategyWeights();
-      }
-      function displayStrategyWeights() {
-        /* ... sin cambios ... */
-      }
-      function displayGenerator() {
-        /* ... sin cambios ... */
-      }
-      function handleGeneration() {
-        /* ... sin cambios ... */
-      }
-      function displayVerifier() {
-        /* ... sin cambios ... */
-      }
-      function handleVerification() {
-        /* ... sin cambios ... */
-      }
+        function displayStats() {
+            if(!analysis || !analysis.frequencies) return;
+            document.getElementById('hot-numbers').innerHTML = analysis.frequencies.slice(0, 5).map(item => `<span class="hot-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`).join('');
+            document.getElementById('cold-numbers').innerHTML = analysis.frequencies.slice(-5).map(item => `<span class="cold-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`).join('');
+            document.getElementById('atraso-numbers').innerHTML = analysis.lags.slice(0,5).map(item => `<div class="flex justify-between items-center text-sm mb-1"><span>Número <b>${item.number}</b>:</span> <span class="font-semibold">${item.lag} sorteos</span></div>`).join('');
+            document.getElementById('top-pairs').innerHTML = analysis.topPairs.slice(0, 5).map(item => `<div class="flex justify-between items-center text-sm mb-1"><span>Par <b>${item.pair.join(', ')}</b>:</span> <span class="font-semibold">${item.count} veces</span></div>`).join('');
+            document.getElementById('sum-analysis').innerHTML = `<p class="text-sm">Suma Promedio: <b>${analysis.sumAnalysis.mean}</b></p><p class="text-sm">Rango Frecuente (25%-75%): <b>${analysis.sumAnalysis.q25} - ${analysis.sumAnalysis.q75}</b></p>`;
+            document.getElementById('odd-even-analysis').innerHTML = analysis.oddEvenDistribution.slice(0,3).map(([dist, count]) => `<div class="flex justify-between items-center text-sm mb-1"><span><b>${dist}</b>:</span> <span class="font-semibold">${count} veces</span></div>`).join('');
+            displayStrategyWeights();
+        }
+        function displayStrategyWeights() { /* ... sin cambios ... */ }
+        function displayGenerator() { /* ... sin cambios ... */ }
+        function handleGeneration() { /* ... sin cambios ... */ }
+        function displayVerifier() { /* ... sin cambios ... */ }
+        function handleVerification() { /* ... sin cambios ... */ }
+        
+        // --- FUNCIONES DE UTILIDAD ---
+        function showNotification(message) { /* ... sin cambios ... */ }
+        function combinations(arr, k) { /* ... sin cambios ... */ }
+        function percentile(arr, p) { /* ... sin cambios ... */ }
+        function sample(arr, k) { /* ... sin cambios ... */ }
 
-      // --- FUNCIONES DE UTILIDAD ---
-      function showNotification(message) {
-        /* ... sin cambios ... */
-      }
-      function combinations(arr, k) {
-        /* ... sin cambios ... */
-      }
-      function percentile(arr, p) {
-        /* ... sin cambios ... */
-      }
-      function sample(arr, k) {
-        /* ... sin cambios ... */
-      }
     </script>
-  </body>
+</body>
 </html>
