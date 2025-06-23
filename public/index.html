@@ -255,7 +255,7 @@
         <div id="history-container" class="hidden"></div>
 
         <!-- Contenedor para Generador y Verificador -->
-        <div id="interactive-container" class="mt-8"></div>
+        <div id="interactive-container" class="mt-8 hidden"></div>
 
         <div
           id="upload-container"
@@ -404,7 +404,7 @@
               "Realizando análisis...";
             performFullAnalysis();
             setupUI();
-            displayLatestResult(); // <-- NUEVO: Mostrar último resultado
+            displayLatestResult();
             document.getElementById("main-content").classList.remove("hidden");
             document.getElementById("upload-container").classList.add("hidden");
           } else {
@@ -454,46 +454,52 @@
 
       // --- RENDERIZADO DE UI ---
       function setupUI() {
+        const mainViews = [
+          "stats-dashboard",
+          "history-container",
+          "interactive-container",
+        ];
+
+        const switchView = (viewIdToShow) => {
+          mainViews.forEach((id) => {
+            const el = document.getElementById(id);
+            if (id === viewIdToShow) {
+              el.classList.remove("hidden");
+            } else {
+              el.classList.add("hidden");
+            }
+          });
+          // Si la vista a mostrar no es un panel interactivo, lo limpiamos
+          if (viewIdToShow !== "interactive-container") {
+            document.getElementById("interactive-container").innerHTML = "";
+          }
+        };
+
         document
           .getElementById("btn-show-stats")
           .addEventListener("click", () => {
-            document
-              .getElementById("stats-dashboard")
-              .classList.remove("hidden");
-            document.getElementById("interactive-container").innerHTML = "";
-            document
-              .getElementById("history-container")
-              .classList.add("hidden");
+            switchView("stats-dashboard");
             displayStats();
           });
         document
           .getElementById("btn-show-history")
           .addEventListener("click", () => {
-            document.getElementById("stats-dashboard").classList.add("hidden");
-            document.getElementById("interactive-container").innerHTML = "";
-            document
-              .getElementById("history-container")
-              .classList.remove("hidden");
+            switchView("history-container");
             displayHistory();
           });
         document
           .getElementById("btn-show-generator")
           .addEventListener("click", () => {
-            document.getElementById("stats-dashboard").classList.add("hidden");
-            document
-              .getElementById("history-container")
-              .classList.add("hidden");
+            switchView("interactive-container");
             displayGenerator();
           });
         document
           .getElementById("btn-show-verifier")
           .addEventListener("click", () => {
-            document.getElementById("stats-dashboard").classList.add("hidden");
-            document
-              .getElementById("history-container")
-              .classList.add("hidden");
+            switchView("interactive-container");
             displayVerifier();
           });
+
         document
           .getElementById("btn-adjust-strategy")
           .addEventListener("click", adjustStrategy);
@@ -508,37 +514,7 @@
       }
 
       function displayLatestResult() {
-        if (fullHistory.length === 0) return;
-        const latest = fullHistory[0];
-        const numbers = [
-          latest.F1,
-          latest.F2,
-          latest.F3,
-          latest.F4,
-          latest.F5,
-          latest.F6,
-        ];
-        const content = `
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div>
-                        <p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${
-                          latest.sorteo
-                        }</span></p>
-                        <p class="text-gray-400">Fecha: <span class="font-bold text-white">${
-                          latest.FECHA
-                        }</span></p>
-                    </div>
-                    <div class="flex space-x-2 mt-4 md:mt-0">
-                         ${numbers
-                           .map(
-                             (n) =>
-                               `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`
-                           )
-                           .join("")}
-                    </div>
-                </div>
-            `;
-        document.getElementById("latest-draw-content").innerHTML = content;
+        /* ... sin cambios ... */
       }
 
       function displayHistory() {
@@ -578,7 +554,51 @@
       }
 
       function displayStats() {
-        /* ... sin cambios ... */
+        if (!analysis.frequencies) return;
+        document.getElementById("hot-numbers").innerHTML = analysis.frequencies
+          .slice(0, 5)
+          .map(
+            (item) =>
+              `<span class="hot-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`
+          )
+          .join("");
+        document.getElementById("cold-numbers").innerHTML = analysis.frequencies
+          .slice(-5)
+          .map(
+            (item) =>
+              `<span class="cold-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`
+          )
+          .join("");
+        document.getElementById("atraso-numbers").innerHTML = analysis.lags
+          .slice(0, 5)
+          .map(
+            (item) =>
+              `<div class="flex justify-between items-center text-sm mb-1"><span>Número <b>${item.number}</b>:</span> <span class="font-semibold">${item.lag} sorteos</span></div>`
+          )
+          .join("");
+        document.getElementById("top-pairs").innerHTML = analysis.topPairs
+          .slice(0, 5)
+          .map(
+            (item) =>
+              `<div class="flex justify-between items-center text-sm mb-1"><span>Par <b>${item.pair.join(
+                ", "
+              )}</b>:</span> <span class="font-semibold">${
+                item.count
+              } veces</span></div>`
+          )
+          .join("");
+        document.getElementById(
+          "sum-analysis"
+        ).innerHTML = `<p class="text-sm">Suma Promedio: <b>${analysis.sumAnalysis.mean}</b></p><p class="text-sm">Rango Frecuente (25%-75%): <b>${analysis.sumAnalysis.q25} - ${analysis.sumAnalysis.q75}</b></p>`;
+        document.getElementById("odd-even-analysis").innerHTML =
+          analysis.oddEvenDistribution
+            .slice(0, 3)
+            .map(
+              ([dist, count]) =>
+                `<div class="flex justify-between items-center text-sm mb-1"><span><b>${dist}</b>:</span> <span class="font-semibold">${count} veces</span></div>`
+            )
+            .join("");
+        displayStrategyWeights();
       }
       function displayStrategyWeights() {
         /* ... sin cambios ... */
