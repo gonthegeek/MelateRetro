@@ -150,48 +150,54 @@
         </div>
 
         <!-- Controles Principales -->
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
           <button
             id="btn-show-stats"
-            class="bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+            class="bg-indigo-600 hover:bg-indigo-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-chart-pie mr-3"></i>Estadísticas
+            <i class="fas fa-chart-pie mr-2"></i>Estadísticas
           </button>
           <button
             id="btn-show-history"
-            class="bg-blue-600 hover:bg-blue-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+            class="bg-blue-600 hover:bg-blue-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-history mr-3"></i>Histórico
+            <i class="fas fa-history mr-2"></i>Histórico
           </button>
           <button
             id="btn-show-generator"
-            class="bg-purple-600 hover:bg-purple-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+            class="bg-purple-600 hover:bg-purple-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-magic-wand-sparkles mr-3"></i>Generador
+            <i class="fas fa-magic-wand-sparkles mr-2"></i>Generador
           </button>
           <button
             id="btn-show-rater"
-            class="bg-cyan-600 hover:bg-cyan-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+            class="bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-star-half-alt mr-3"></i>Calificar
+            <i class="fas fa-star-half-alt mr-2"></i>Calificar
           </button>
           <button
             id="btn-show-verifier"
-            class="bg-teal-600 hover:bg-teal-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+            class="bg-teal-600 hover:bg-teal-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-tasks mr-3"></i>Verificador
+            <i class="fas fa-tasks mr-2"></i>Verificador
+          </button>
+          <button
+            id="btn-show-reviewer"
+            class="bg-pink-600 hover:bg-pink-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-search-plus mr-2"></i>Revisar
           </button>
           <button
             id="btn-adjust-strategy"
-            class="bg-amber-600 hover:bg-amber-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+            class="bg-amber-600 hover:bg-amber-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-brain mr-3"></i>Mejorar
+            <i class="fas fa-brain mr-2"></i>Mejorar
           </button>
           <button
             id="btn-upload-csv"
-            class="bg-green-600 hover:bg-green-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+            class="bg-green-600 hover:bg-green-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-upload mr-3"></i>Cargar CSV
+            <i class="fas fa-upload mr-2"></i>Cargar CSV
           </button>
         </div>
 
@@ -271,7 +277,7 @@
           <h2 class="text-2xl font-bold mb-2">Base de Datos Vacía</h2>
           <p class="text-gray-400 mb-6">
             Para comenzar, por favor carga el archivo CSV con los resultados
-            históricos de Melate Retro.
+            históricos.
           </p>
           <button
             id="btn-trigger-upload"
@@ -317,6 +323,7 @@
         query,
         orderBy,
         writeBatch,
+        where,
       } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
       const firebaseConfig = {
@@ -345,6 +352,10 @@
       const lastAnalyzedDocRef = doc(
         db,
         `artifacts/${appId}/public/data/config/lastAnalyzedDraw`
+      );
+      const suggestionsCollectionRef = collection(
+        db,
+        `artifacts/${appId}/public/data/suggestions`
       );
 
       let fullHistory = [];
@@ -748,7 +759,6 @@
           );
           return;
         }
-
         const winningCombo = [
           lastDrawInDb.F1,
           lastDrawInDb.F2,
@@ -763,7 +773,6 @@
         const increaseFactor = 1.01;
         const decreaseFactor = 0.99;
         let changes = [];
-
         const winSum = winningCombo.reduce((a, b) => a + b, 0);
         if (
           winSum >= analysis.sumAnalysis.q25 &&
@@ -775,7 +784,6 @@
           strategyWeights.suma_rango *= decreaseFactor;
           changes.push("Suma fuera de rango: Peso reducido.");
         }
-
         const evens = winningCombo.filter((n) => n % 2 === 0).length;
         const distStr = `${evens}P-${6 - evens}I`;
         if (analysis.topOddEven.includes(distStr)) {
@@ -785,11 +793,10 @@
           strategyWeights.dist_par_impar *= decreaseFactor;
           changes.push(`Distribución ${distStr} no es común: Peso reducido.`);
         }
-
         try {
           await setDoc(configDocRef, strategyWeights);
           await setDoc(lastAnalyzedDocRef, { sorteo: lastDrawInDb.sorteo });
-          lastAnalyzedDrawNumber = lastDrawInDb.sorteo; // Update state
+          lastAnalyzedDrawNumber = lastDrawInDb.sorteo;
           showNotification("¡Estrategia mejorada!\n" + changes.join("\n"));
           displayStrategyWeights();
         } catch (e) {
@@ -831,6 +838,12 @@
             displayVerifier();
           });
         document
+          .getElementById("btn-show-reviewer")
+          .addEventListener("click", () => {
+            switchView("interactive-container");
+            displayReviewer();
+          });
+        document
           .getElementById("btn-adjust-strategy")
           .addEventListener("click", adjustStrategy);
         setupUploadListeners();
@@ -865,22 +878,19 @@
           latest.F5,
           latest.F6,
         ];
-        document.getElementById("latest-draw-content").innerHTML = `
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div><p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${
-                      latest.sorteo
-                    }</span></p><p class="text-gray-400">Fecha: <span class="font-bold text-white">${
+        document.getElementById(
+          "latest-draw-content"
+        ).innerHTML = ` <div class="flex flex-col md:flex-row justify-between items-center"> <div><p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${
+          latest.sorteo
+        }</span></p><p class="text-gray-400">Fecha: <span class="font-bold text-white">${
           latest.FECHA
-        }</span></p></div>
-                    <div class="flex space-x-2 mt-4 md:mt-0">${numbers
-                      .map(
-                        (n) =>
-                          `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`
-                      )
-                      .join("")}</div>
-                </div>`;
+        }</span></p></div> <div class="flex space-x-2 mt-4 md:mt-0">${numbers
+          .map(
+            (n) =>
+              `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`
+          )
+          .join("")}</div> </div>`;
       }
-
       function displayHistory() {
         const container = document.getElementById("history-container");
         let tableHTML = `<h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">Histórico de Resultados</h2><div class="overflow-x-auto stat-card rounded-lg"><table class="w-full text-sm text-left"><thead class="text-xs text-gray-300 uppercase bg-gray-700"><tr><th scope="col" class="px-6 py-3">Sorteo</th><th scope="col" class="px-6 py-3">Fecha</th><th scope="col" class="px-6 py-3">Combinación Ganadora</th></tr></thead><tbody>`;
@@ -898,7 +908,6 @@
         tableHTML += `</tbody></table></div>`;
         container.innerHTML = tableHTML;
       }
-
       function displayStats() {
         if (!analysis || !analysis.frequencies) return;
         document.getElementById("hot-numbers").innerHTML = analysis.frequencies
@@ -969,7 +978,7 @@
           .getElementById("btn-generate")
           .addEventListener("click", handleGeneration);
       }
-      function handleGeneration() {
+      async function handleGeneration() {
         const strategy = document.getElementById("strategy-select").value;
         const quantity = parseInt(
           document.getElementById("quantity-input").value
@@ -977,6 +986,23 @@
         let results;
         if (strategy === "inteligente") {
           results = generateIntelligentCombinations(quantity);
+          if (results.length > 0) {
+            const suggestionsToSave = results.map((r) => ({
+              ...r,
+              combinacion: r.combination,
+              sorteo_sugerido_para: fullHistory[0].sorteo + 1,
+              fecha_generacion: new Date(),
+            }));
+            const batch = writeBatch(db);
+            suggestionsToSave.forEach((sug) => {
+              const newDocRef = doc(suggestionsCollectionRef);
+              batch.set(newDocRef, sug);
+            });
+            await batch.commit();
+            showNotification(
+              "Sugerencias inteligentes guardadas para futura revisión."
+            );
+          }
         } else {
           results = generateSimpleCombinations(quantity, strategy);
         }
@@ -1048,16 +1074,7 @@
       }
       function displayRater() {
         const container = document.getElementById("interactive-container");
-        container.innerHTML = `
-                <div class="stat-card p-6 rounded-lg">
-                    <h2 class="text-2xl font-bold mb-4">Calificador de Combinaciones</h2>
-                    <p class="text-gray-400 mb-4">Introduce 6 números para ver su calificación estadística basada en las reglas actuales.</p>
-                    <div class="flex flex-col space-y-4">
-                        <input id="rater-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600">
-                        <button id="btn-rate" class="w-full bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg text-lg font-semibold">Calificar Combinación</button>
-                    </div>
-                    <div id="rater-results" class="mt-6"></div>
-                </div>`;
+        container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Calificador de Combinaciones</h2><p class="text-gray-400 mb-4">Introduce 6 números para ver su calificación estadística basada en las reglas actuales.</p><div class="flex flex-col space-y-4"><input id="rater-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-rate" class="w-full bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg text-lg font-semibold">Calificar Combinación</button></div><div id="rater-results" class="mt-6"></div></div>`;
         document
           .getElementById("btn-rate")
           .addEventListener("click", handleRating);
@@ -1068,7 +1085,6 @@
           .split(",")
           .map((n) => parseInt(n.trim()))
           .filter((n) => !isNaN(n) && n >= 1 && n <= 39);
-
         if (numbers.length !== 6) {
           showNotification(
             "Por favor, introduce exactamente 6 números válidos."
@@ -1080,11 +1096,9 @@
           showNotification("Los números deben ser únicos.");
           return;
         }
-
         const { confidence, breakdown } = rateCombination(
           uniqueNumbers.sort((a, b) => a - b)
         );
-
         let breakdownHTML = Object.entries(breakdown)
           .map(([rule, score]) => {
             const color = score > 0 ? "text-green-400" : "text-gray-500";
@@ -1093,20 +1107,12 @@
             )} pts</span></div>`;
           })
           .join("");
-
         const resultsContainer = document.getElementById("rater-results");
-        resultsContainer.innerHTML = `
-                <h3 class="text-xl font-semibold mb-3">Calificación para: [${uniqueNumbers.join(
-                  ", "
-                )}]</h3>
-                <div class="space-y-2 p-4 bg-gray-800 rounded-md">
-                    ${breakdownHTML}
-                    <div class="border-t border-gray-600 mt-3 pt-3 flex justify-between font-bold text-lg text-indigo-400">
-                        <span>Confianza Final:</span>
-                        <span>${confidence.toFixed(0)}%</span>
-                    </div>
-                </div>
-            `;
+        resultsContainer.innerHTML = ` <h3 class="text-xl font-semibold mb-3">Calificación para: [${uniqueNumbers.join(
+          ", "
+        )}]</h3> <div class="space-y-2 p-4 bg-gray-800 rounded-md"> ${breakdownHTML} <div class="border-t border-gray-600 mt-3 pt-3 flex justify-between font-bold text-lg text-indigo-400"> <span>Confianza Final:</span> <span>${confidence.toFixed(
+          0
+        )}%</span> </div> </div>`;
       }
       function rateCombination(comboArr) {
         let score = 0;
@@ -1152,6 +1158,149 @@
         breakdown["Pares Frecuentes"] = pairScore;
         const confidence = (score / maxScore) * 100;
         return { confidence, breakdown };
+      }
+      async function displayReviewer() {
+        const container = document.getElementById("interactive-container");
+        container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Revisar Sugerencias Pasadas</h2><div id="reviewer-content">Cargando sugerencias...</div></div>`;
+        try {
+          const suggestionsSnapshot = await getDocs(
+            query(
+              suggestionsCollectionRef,
+              orderBy("sorteo_sugerido_para", "desc")
+            )
+          );
+          const suggestionsByDraw = {};
+          suggestionsSnapshot.docs.forEach((doc) => {
+            const data = doc.data();
+            const key = data.sorteo_sugerido_para;
+            if (!suggestionsByDraw[key]) suggestionsByDraw[key] = [];
+            suggestionsByDraw[key].push(data);
+          });
+
+          if (Object.keys(suggestionsByDraw).length === 0) {
+            document.getElementById(
+              "reviewer-content"
+            ).innerHTML = `<p class="text-gray-400">No se encontraron sugerencias guardadas. Genera algunas con la "Estrategia Inteligente" primero.</p>`;
+            return;
+          }
+
+          let optionsHTML = Object.keys(suggestionsByDraw)
+            .sort((a, b) => b - a)
+            .map(
+              (drawNum) =>
+                `<option value="${drawNum}">Sorteo ${drawNum}</option>`
+            )
+            .join("");
+          document.getElementById("reviewer-content").innerHTML = `
+                    <div class="flex flex-col space-y-4">
+                        <label for="review-draw-select" class="block mb-2 font-semibold">Selecciona un sorteo para revisar:</label>
+                        <select id="review-draw-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600">${optionsHTML}</select>
+                        <div id="review-results-area" class="mt-6 space-y-4"></div>
+                    </div>`;
+
+          const select = document.getElementById("review-draw-select");
+          select.addEventListener("change", (e) =>
+            handleReviewSelection(e.target.value, suggestionsByDraw)
+          );
+          handleReviewSelection(select.value, suggestionsByDraw); // Cargar el primero por defecto
+        } catch (e) {
+          console.error("Error cargando sugerencias:", e);
+          document.getElementById(
+            "reviewer-content"
+          ).innerHTML = `<p class="text-red-500">Error al cargar las sugerencias.</p>`;
+        }
+      }
+      function handleReviewSelection(drawNumberStr, suggestionsByDraw) {
+        const drawNumber = parseInt(drawNumberStr);
+        const suggestions = suggestionsByDraw[drawNumber];
+        const winningDraw = fullHistory.find((d) => d.sorteo === drawNumber);
+        const reviewArea = document.getElementById("review-results-area");
+
+        if (!winningDraw) {
+          reviewArea.innerHTML = `<p class="text-yellow-400">Aún no se ha cargado el resultado del sorteo ${drawNumber}.</p>`;
+          return;
+        }
+        const winningCombo = [
+          winningDraw.F1,
+          winningDraw.F2,
+          winningDraw.F3,
+          winningDraw.F4,
+          winningDraw.F5,
+          winningDraw.F6,
+        ].sort((a, b) => a - b);
+
+        let html = `<h3 class="text-xl font-bold text-indigo-400">Resultado Real del Sorteo ${drawNumber}</h3><div class="flex space-x-2 my-2">${winningCombo
+          .map(
+            (n) =>
+              `<span class="number-ball bg-green-600 text-white">${n}</span>`
+          )
+          .join("")}</div>`;
+
+        suggestions.forEach((sug) => {
+          const suggestedCombo = JSON.parse(sug.combinacion);
+          const hits = suggestedCombo.filter((n) =>
+            winningCombo.includes(n)
+          ).length;
+
+          const { breakdown: sugBreakdown } = rateCombination(suggestedCombo);
+          const { breakdown: winBreakdown } = rateCombination(winningCombo);
+
+          html += `
+                    <div class="p-4 bg-gray-800 rounded-lg border border-gray-700">
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-2">${suggestedCombo
+                              .map(
+                                (n) =>
+                                  `<span class="number-ball ${
+                                    winningCombo.includes(n)
+                                      ? "bg-green-500"
+                                      : "bg-gray-600"
+                                  } text-white">${n}</span>`
+                              )
+                              .join("")}</div>
+                            <div class="text-right">
+                                <p class="text-lg font-bold">${hits} de 6 aciertos</p>
+                                <p class="text-sm text-gray-400">${
+                                  sug.confidence
+                                }</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-600 text-xs grid grid-cols-2 gap-x-4">
+                            <div>
+                                <h4 class="font-semibold mb-1 text-gray-300">Análisis de la Sugerencia:</h4>
+                                ${Object.entries(sugBreakdown)
+                                  .map(
+                                    ([rule, score]) =>
+                                      `<p class="${
+                                        score > 0
+                                          ? "text-green-400"
+                                          : "text-red-400"
+                                      }">${rule}: ${
+                                        score > 0 ? "Acierto" : "Fallo"
+                                      }</p>`
+                                  )
+                                  .join("")}
+                            </div>
+                             <div>
+                                <h4 class="font-semibold mb-1 text-gray-300">Análisis del Ganador:</h4>
+                                ${Object.entries(winBreakdown)
+                                  .map(
+                                    ([rule, score]) =>
+                                      `<p class="${
+                                        score > 0
+                                          ? "text-green-400"
+                                          : "text-red-400"
+                                      }">${rule}: ${
+                                        score > 0 ? "Acierto" : "Fallo"
+                                      }</p>`
+                                  )
+                                  .join("")}
+                            </div>
+                        </div>
+                    </div>
+                `;
+        });
+        reviewArea.innerHTML = html;
       }
 
       // --- FUNCIONES DE UTILIDAD ---
