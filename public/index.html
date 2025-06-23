@@ -155,15 +155,9 @@
         import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Configuración de Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyB3zfGgO63gc1VoWzQLeRsD09aoBMOazpg",
-  authDomain: "analizadormelateretro.firebaseapp.com",
-  projectId: "analizadormelateretro",
-  storageBucket: "analizadormelateretro.firebasestorage.app",
-  messagingSenderId: "852396148354",
-  appId: "1:852396148354:web:fc430c9d8ffdb19ce1d69b",
-  measurementId: "G-E0Z2VFNLT2"
-};
+        const firebaseConfig = {
+            // PEGA AQUÍ EL OBJETO firebaseConfig DE TU PROYECTO
+        };
         const appId = firebaseConfig.appId;
 
         const app = initializeApp(firebaseConfig);
@@ -178,10 +172,47 @@ const firebaseConfig = {
         let strategyWeights = {};
 
         // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
-        window.addEventListener('DOMContentLoaded', () => { /* ... sin cambios ... */ });
-        async function handleLogin(e) { /* ... sin cambios ... */ }
-        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+        window.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+            
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    document.getElementById('login-container').classList.add('hidden');
+                    document.getElementById('app-container').classList.remove('hidden');
+                    document.getElementById('auth-status').textContent = `Usuario: ${user.email}`;
+                    loadInitialData();
+                } else {
+                    document.getElementById('login-container').classList.remove('hidden');
+                    document.getElementById('app-container').classList.add('hidden');
+                }
+            });
+             document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+             document.getElementById('btn-close-notification').addEventListener('click', () => {
+                document.getElementById('notification-modal').classList.add('hidden');
+            });
+        });
+        
+        async function handleLogin(e) {
+             e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.querySelector('#loading-message').textContent = 'Autenticando...';
 
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) {
+                console.error("Error de inicio de sesión:", error);
+                showNotification(`Error de inicio de sesión: ${error.message}`);
+            } finally {
+                loadingOverlay.classList.add('hidden');
+            }
+        }
+       
         async function loadInitialData() {
             const loadingOverlay = document.getElementById('loading-overlay');
             try {
@@ -202,55 +233,37 @@ const firebaseConfig = {
                     displayLatestResult();
                     document.getElementById('main-content').classList.remove('hidden');
                     document.getElementById('upload-container').classList.add('hidden');
-                    // Mostrar estadísticas por defecto al cargar
-                    document.getElementById('stats-dashboard').classList.remove('hidden');
+                    
+                    switchView('stats-dashboard');
                     displayStats();
+
                 } else {
                     document.getElementById('upload-container').classList.remove('hidden');
-                    setupUploadListeners();
+                    setupUI(); 
                 }
             } catch (error) {
                 console.error("Error al cargar datos iniciales:", error);
                 showNotification(`No se pudieron cargar los datos desde Firebase. Causa: ${error.message}`);
                  document.getElementById('upload-container').classList.remove('hidden');
-                 setupUploadListeners();
+                 setupUI();
             } finally {
                  loadingOverlay.classList.add('hidden');
             }
         }
         
         // --- MANEJO DE CARGA DE CSV ---
-        function setupUploadListeners() { /* ... sin cambios ... */ }
-        function handleFileUpload(event) { /* ... sin cambios ... */ }
-        async function parseAndUploadCSV(csvText) { /* ... sin cambios ... */ }
+        function setupUploadListeners() { const uploadButton = document.getElementById('btn-trigger-upload'); const fileInput = document.getElementById('csv-file-input'); if(uploadButton) uploadButton.addEventListener('click', () => fileInput.click()); if(fileInput) fileInput.addEventListener('change', handleFileUpload); const menuUploadButton = document.getElementById('btn-upload-csv'); if(menuUploadButton) menuUploadButton.addEventListener('click', () => fileInput.click());}
+        function handleFileUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const text = e.target.result; parseAndUploadCSV(text); }; reader.readAsText(file);}
+        async function parseAndUploadCSV(csvText) { document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-message').textContent = 'Procesando y subiendo CSV...'; const lines = csvText.trim().split('\n'); const header = lines[0].split(',').map(h => h.trim()); const requiredHeaders = ['CONCURSO', 'FECHA', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6']; if (!requiredHeaders.every(h => header.includes(h))) { showNotification(`El archivo CSV no es válido. Columnas requeridas: ${requiredHeaders.join(', ')}`); document.getElementById('loading-overlay').classList.add('hidden'); return; } const records = lines.slice(1).map(line => { const values = line.split(','); const record = header.reduce((obj, h, i) => { obj[h] = values[i] ? values[i].trim() : ''; return obj; }, {}); return record; }); try { const batch = writeBatch(db); records.forEach(record => { const sorteoNum = parseInt(record.CONCURSO, 10); if (isNaN(sorteoNum)) return; const newDocRef = doc(resultsCollectionRef, String(sorteoNum)); batch.set(newDocRef, { sorteo: sorteoNum, FECHA: record.FECHA, F1: parseInt(record.F1, 10), F2: parseInt(record.F2, 10), F3: parseInt(record.F3, 10), F4: parseInt(record.F4, 10), F5: parseInt(record.F5, 10), F6: parseInt(record.F6, 10), }); }); await batch.commit(); showNotification(`¡Éxito! Se cargaron ${records.length} registros. La aplicación se recargará.`); setTimeout(() => window.location.reload(), 2000); } catch (error) { console.error("Error al subir el lote a Firestore:", error); showNotification("Ocurrió un error al subir los datos. Revisa la consola."); document.getElementById('loading-overlay').classList.add('hidden'); }}
         
         // --- LÓGICA DE ANÁLISIS, GENERACIÓN Y APRENDIZAJE ---
-        function performFullAnalysis() { /* ... sin cambios ... */ }
-        function generateIntelligentCombinations(quantity) { /* ... sin cambios ... */ }
-        function generateSimpleCombinations(quantity, strategy) { /* ... sin cambios ... */ }
-        async function adjustStrategy() { /* ... sin cambios ... */ }
+        function performFullAnalysis() { const allNumbers = fullHistory.flatMap(draw => [draw.F1, draw.F2, draw.F3, draw.F4, draw.F5, draw.F6]); const numberCounts = allNumbers.reduce((acc, num) => { acc[num] = (acc[num] || 0) + 1; return acc; }, {}); analysis.frequencies = Object.entries(numberCounts).map(([num, freq]) => ({ number: parseInt(num), frequency: freq })).sort((a, b) => b.frequency - a.frequency); const lastDrawNumber = Math.max(...fullHistory.map(d => d.sorteo)); analysis.lags = Array.from({ length: 39 }, (_, i) => { const num = i + 1; const lastSeenDraw = fullHistory.find(d => [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].includes(num)); return { number: num, lag: lastSeenDraw ? lastDrawNumber - lastSeenDraw.sorteo : fullHistory.length }; }).sort((a,b) => b.lag - a.lag); const allPairs = fullHistory.flatMap(d => { const numbers = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].sort((a, b) => a - b); return Array.from(combinations(numbers, 2)); }); const pairCounts = allPairs.reduce((acc, pair) => { const key = JSON.stringify(pair); acc[key] = (acc[key] || 0) + 1; return acc; }, {}); analysis.topPairs = Object.entries(pairCounts).sort(([,a],[,b]) => b-a).slice(0, 10).map(([pair, count]) => ({ pair: JSON.parse(pair), count })); analysis.topPairsSet = new Set(analysis.topPairs.slice(0, 20).map(p => JSON.stringify(p.pair))); const oddEvenCounts = fullHistory.map(d => { const evens = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].filter(n => n % 2 === 0).length; return `${evens}P-${6-evens}I`; }).reduce((acc, dist) => { acc[dist] = (acc[dist] || 0) + 1; return acc; }, {}); analysis.oddEvenDistribution = Object.entries(oddEvenCounts).sort(([,a],[,b]) => b-a); analysis.topOddEven = analysis.oddEvenDistribution.slice(0,3).map(([dist]) => dist); const sums = fullHistory.map(d => d.F1+d.F2+d.F3+d.F4+d.F5+d.F6); const sumMean = sums.reduce((a, b) => a + b, 0) / sums.length; const sumStdDev = Math.sqrt(sums.map(x => Math.pow(x - sumMean, 2)).reduce((a, b) => a + b) / sums.length); analysis.sumAnalysis = { mean: sumMean.toFixed(2), std: sumStdDev.toFixed(2), min: Math.min(...sums), max: Math.max(...sums), q25: percentile(sums, 25), q75: percentile(sums, 75) }; }
+        function generateIntelligentCombinations(quantity) { const candidates = {}; const maxAttempts = Math.max(5000, quantity * 500); const freqs = analysis.frequencies; const cold = new Set(freqs.slice(-13).map(f => f.number)); const hot = new Set(freqs.slice(0, 13).map(f => f.number)); const maxScore = Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100; for (let i = 0; i < maxAttempts; i++) { const combo = new Set(); while(combo.size < 6) { combo.add(Math.floor(Math.random() * 39) + 1); } const comboArr = Array.from(combo).sort((a,b) => a-b); const comboKey = JSON.stringify(comboArr); if(candidates[comboKey]) continue; let score = 0; const comboSum = comboArr.reduce((a,b)=> a+b, 0); if (comboSum >= analysis.sumAnalysis.q25 && comboSum <= analysis.sumAnalysis.q75) { score += strategyWeights.suma_rango; } const evens = comboArr.filter(n => n % 2 === 0).length; const distStr = `${evens}P-${6-evens}I`; if (analysis.topOddEven.includes(distStr)) { score += strategyWeights.dist_par_impar; } const coldCount = comboArr.filter(n => cold.has(n)).length; const hotCount = comboArr.filter(n => hot.has(n)).length; if(coldCount > 0 && hotCount > 0 && (6 - coldCount - hotCount) > 0) { score += strategyWeights.mix_frio_caliente; } let pairHits = 0; for(const pair of combinations(comboArr, 2)) { if(analysis.topPairsSet.has(JSON.stringify(pair))) pairHits++; } score += Math.min(pairHits * 5, strategyWeights.pares_frecuentes); candidates[comboKey] = score; } const sortedCandidates = Object.entries(candidates).sort(([,a],[,b]) => b-a); return sortedCandidates.slice(0, quantity).map(([comboStr, score]) => { const confidence = (score / maxScore) * 100; let label = `Confianza: ${confidence.toFixed(0)}% (Baja)`; if(confidence >= 80) label = `Confianza: ${confidence.toFixed(0)}% (Alta)`; else if(confidence >= 60) label = `Confianza: ${confidence.toFixed(0)}% (Media)`; return { combination: JSON.parse(comboStr), confidence: label }; }); }
+        function generateSimpleCombinations(quantity, strategy) { const combinationsSet = new Set(); let attempts = 0; const maxAttempts = quantity * 100; const hotNumbers = analysis.frequencies.slice(0, 12).map(f => f.number); const coldNumbers = analysis.frequencies.slice(-12).map(f => f.number); const evenNumbers = Array.from({length: 19}, (_, i) => (i + 1) * 2); const oddNumbers = Array.from({length: 20}, (_, i) => i * 2 + 1); const sumMin = analysis.sumAnalysis.q25; const sumMax = analysis.sumAnalysis.q75; while(combinationsSet.size < quantity && attempts < maxAttempts) { let combo = []; if(strategy === 'calientes') combo = Array.from(sample(hotNumbers, 6)); else if(strategy === 'frios') combo = Array.from(sample(coldNumbers, 6)); else if(strategy === 'aleatorio') combo = Array.from(sample(Array.from({length:39}, (_, i) => i+1), 6)); else if(strategy === '3_pares_3_impares') combo = [...sample(evenNumbers, 3), ...sample(oddNumbers, 3)]; else if (strategy === 'suma_frecuente') { let tempCombo = Array.from(sample(Array.from({length:39}, (_, i) => i+1), 6)); let tempSum = tempCombo.reduce((a,b) => a+b, 0); if(tempSum >= sumMin && tempSum <= sumMax) combo = tempCombo; } if(combo.length === 6) { combinationsSet.add(JSON.stringify(combo.sort((a,b) => a-b))); } attempts++; } return Array.from(combinationsSet).map(c => ({ combination: JSON.parse(c), confidence: '(Estrategia Simple)' })); }
+        async function adjustStrategy() { if (fullHistory.length < 2) { showNotification("No hay suficientes datos para ajustar la estrategia."); return; } const lastDraw = fullHistory[0]; const winningCombo = [lastDraw.F1, lastDraw.F2, lastDraw.F3, lastDraw.F4, lastDraw.F5, lastDraw.F6].sort((a,b) => a-b); showNotification(`Analizando sorteo ${lastDraw.sorteo} para mejorar estrategia...`); const increaseFactor = 1.01; const decreaseFactor = 0.99; let changes = []; const winSum = winningCombo.reduce((a,b) => a+b, 0); if(winSum >= analysis.sumAnalysis.q25 && winSum <= analysis.sumAnalysis.q75) { strategyWeights.suma_rango *= increaseFactor; changes.push("Suma en rango: Peso aumentado."); } else { strategyWeights.suma_rango *= decreaseFactor; changes.push("Suma fuera de rango: Peso reducido."); } const evens = winningCombo.filter(n => n % 2 === 0).length; const distStr = `${evens}P-${6-evens}I`; if (analysis.topOddEven.includes(distStr)) { strategyWeights.dist_par_impar *= increaseFactor; changes.push(`Distribución ${distStr} es común: Peso aumentado.`); } else { strategyWeights.dist_par_impar *= decreaseFactor; changes.push(`Distribución ${distStr} no es común: Peso reducido.`); } try { await setDoc(configDocRef, strategyWeights); showNotification("¡Estrategia mejorada!\n" + changes.join("\n")); displayStrategyWeights(); } catch(e) { console.error("Error al guardar nuevos pesos: ", e); showNotification("Error al guardar la mejora de la estrategia."); } }
         
         // --- RENDERIZADO DE UI ---
         function setupUI() {
-            const mainViews = ['stats-dashboard', 'history-container', 'interactive-container'];
-
-            const switchView = (viewIdToShow) => {
-                mainViews.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) { // Verificar si el elemento existe
-                        if (id === viewIdToShow) {
-                            el.classList.remove('hidden');
-                        } else {
-                            el.classList.add('hidden');
-                        }
-                    }
-                });
-                // Limpiar el contenedor interactivo si no es la vista activa
-                if (viewIdToShow !== 'interactive-container') {
-                     document.getElementById('interactive-container').innerHTML = '';
-                }
-            };
-
             document.getElementById('btn-show-stats').addEventListener('click', () => {
                 switchView('stats-dashboard');
                 displayStats();
@@ -267,42 +280,74 @@ const firebaseConfig = {
                 switchView('interactive-container');
                 displayVerifier();
             });
-            
             document.getElementById('btn-adjust-strategy').addEventListener('click', adjustStrategy);
-            document.getElementById('btn-close-notification').addEventListener('click', () => {
-                document.getElementById('notification-modal').classList.add('hidden');
-            });
             setupUploadListeners();
         }
-        
-        function displayLatestResult() {
-            if (fullHistory.length === 0) return;
-            try {
-                const latest = fullHistory[0];
-                if (!latest || typeof latest.F1 === 'undefined') {
-                    console.error("El último sorteo no tiene datos válidos:", latest);
-                    return;
+
+        function switchView(viewIdToShow) {
+            const mainViews = ['stats-dashboard', 'history-container', 'interactive-container'];
+            mainViews.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.add('hidden');
                 }
-                const numbers = [latest.F1, latest.F2, latest.F3, latest.F4, latest.F5, latest.F6];
-                const content = `
-                    <div class="flex flex-col md:flex-row justify-between items-center">
-                        <div>
-                            <p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${latest.sorteo}</span></p>
-                            <p class="text-gray-400">Fecha: <span class="font-bold text-white">${latest.FECHA}</span></p>
-                        </div>
-                        <div class="flex space-x-2 mt-4 md:mt-0">
-                             ${numbers.map(n => `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`).join('')}
-                        </div>
-                    </div>
-                `;
-                document.getElementById('latest-draw-content').innerHTML = content;
-            } catch (e) {
-                 console.error("Error al mostrar el último sorteo:", e);
-                 document.getElementById('latest-draw-content').innerHTML = `<p class="text-red-500">Error al cargar el último resultado.</p>`;
+            });
+            const viewToShow = document.getElementById(viewIdToShow);
+            if (viewToShow) {
+                viewToShow.classList.remove('hidden');
             }
         }
         
-        function displayHistory() { /* ... sin cambios ... */ }
+        function displayLatestResult() {
+            if (fullHistory.length === 0) {
+                document.getElementById('latest-draw-card').classList.add('hidden');
+                return;
+            };
+            document.getElementById('latest-draw-card').classList.remove('hidden');
+            const latest = fullHistory[0];
+            const numbers = [latest.F1, latest.F2, latest.F3, latest.F4, latest.F5, latest.F6];
+            const content = `
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div>
+                        <p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${latest.sorteo}</span></p>
+                        <p class="text-gray-400">Fecha: <span class="font-bold text-white">${latest.FECHA}</span></p>
+                    </div>
+                    <div class="flex space-x-2 mt-4 md:mt-0">
+                         ${numbers.map(n => `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('latest-draw-content').innerHTML = content;
+        }
+        
+        function displayHistory() {
+            const container = document.getElementById('history-container');
+            let tableHTML = `
+                <h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">Histórico de Resultados</h2>
+                <div class="overflow-x-auto stat-card rounded-lg">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-300 uppercase bg-gray-700">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Sorteo</th>
+                                <th scope="col" class="px-6 py-3">Fecha</th>
+                                <th scope="col" class="px-6 py-3">Combinación Ganadora</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            fullHistory.forEach(draw => {
+                const numbers = [draw.F1, draw.F2, draw.F3, draw.F4, draw.F5, draw.F6].join(', ');
+                tableHTML += `
+                    <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
+                        <td class="px-6 py-4 font-medium">${draw.sorteo}</td>
+                        <td class="px-6 py-4">${draw.FECHA}</td>
+                        <td class="px-6 py-4 font-mono">${numbers}</td>
+                    </tr>
+                `;
+            });
+            tableHTML += `</tbody></table></div>`;
+            container.innerHTML = tableHTML;
+        }
 
         function displayStats() {
             if(!analysis || !analysis.frequencies) return;
@@ -314,17 +359,17 @@ const firebaseConfig = {
             document.getElementById('odd-even-analysis').innerHTML = analysis.oddEvenDistribution.slice(0,3).map(([dist, count]) => `<div class="flex justify-between items-center text-sm mb-1"><span><b>${dist}</b>:</span> <span class="font-semibold">${count} veces</span></div>`).join('');
             displayStrategyWeights();
         }
-        function displayStrategyWeights() { /* ... sin cambios ... */ }
-        function displayGenerator() { /* ... sin cambios ... */ }
-        function handleGeneration() { /* ... sin cambios ... */ }
-        function displayVerifier() { /* ... sin cambios ... */ }
-        function handleVerification() { /* ... sin cambios ... */ }
+        function displayStrategyWeights() { document.getElementById('strategy-weights').innerHTML = Object.entries(strategyWeights).map(([key, val]) => `<div class="flex justify-between items-center text-sm mb-1"><span>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span><span class="font-semibold">${val.toFixed(2)}</span></div>`).join(''); }
+        function displayGenerator() { const container = document.getElementById('interactive-container'); container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Generador de Combinaciones</h2><div class="flex flex-col space-y-4"><div><label for="strategy-select" class="block mb-2 font-semibold">Elige una Estrategia:</label><select id="strategy-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="inteligente">Estrategia Inteligente (Recomendado)</option><option value="calientes">Usar Números Calientes</option><option value="frios">Usar Números Fríos</option><option value="3_pares_3_impares">3 Pares y 3 Impares</option><option value="suma_frecuente">Suma en Rango Frecuente</option><option value="aleatorio">Completamente Aleatorio</option></select></div><div><label for="quantity-input" class="block mb-2 font-semibold">Cantidad de Combinaciones:</label><input id="quantity-input" type="number" value="10" min="1" max="50" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"></div><button id="btn-generate" class="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded-lg text-lg font-semibold">Generar</button></div><div id="results-container" class="mt-6"></div></div>`; document.getElementById('btn-generate').addEventListener('click', handleGeneration); }
+        function handleGeneration() { const strategy = document.getElementById('strategy-select').value; const quantity = parseInt(document.getElementById('quantity-input').value); let results; if(strategy === 'inteligente') { results = generateIntelligentCombinations(quantity); } else { results = generateSimpleCombinations(quantity, strategy); } const resultsContainer = document.getElementById('results-container'); resultsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-3">Combinaciones Sugeridas</h3>` + results.map(res => `<div class="flex items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex space-x-2">${res.combination.map(n => `<span class="bg-gray-600 w-10 h-10 flex items-center justify-center font-bold rounded-full">${n}</span>`).join('')}</div><span class="text-sm text-gray-400">${res.confidence}</span></div>`).join(''); }
+        function displayVerifier() { const container = document.getElementById('interactive-container'); container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Verificador de Histórico (Backtesting)</h2><p class="text-gray-400 mb-4">Introduce 6 números separados por comas para ver su rendimiento histórico.</p><div class="flex flex-col space-y-4"><input id="verifier-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-verify" class="w-full bg-teal-600 hover:bg-teal-700 p-3 rounded-lg text-lg font-semibold">Verificar</button></div><div id="verifier-results" class="mt-6"></div></div>`; document.getElementById('btn-verify').addEventListener('click', handleVerification); }
+        function handleVerification() { const input = document.getElementById('verifier-input').value; const numbers = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 39); if (numbers.length !== 6) { showNotification("Por favor, introduce exactamente 6 números válidos."); return; } const userSet = new Set(numbers); const counts = { 6: 0, 5: 0, 4: 0, 3: 0, 2: 0 }; fullHistory.forEach(draw => { const drawSet = new Set([draw.F1, draw.F2, draw.F3, draw.F4, draw.F5, draw.F6]); const intersection = new Set([...userSet].filter(x => drawSet.has(x))); const hits = intersection.size; if (hits >= 2) { counts[hits]++; } }); const resultsContainer = document.getElementById('verifier-results'); resultsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-3">Resultados para: [${numbers.join(', ')}]</h3>${Object.entries(counts).reverse().map(([hits, count]) => `<div class="flex justify-between text-sm mb-1"><span>Aciertos de <b>${hits}</b> números:</span><span class="font-semibold">${count} veces</span></div>`).join('')}`; }
         
         // --- FUNCIONES DE UTILIDAD ---
-        function showNotification(message) { /* ... sin cambios ... */ }
-        function combinations(arr, k) { /* ... sin cambios ... */ }
-        function percentile(arr, p) { /* ... sin cambios ... */ }
-        function sample(arr, k) { /* ... sin cambios ... */ }
+        function showNotification(message) { document.getElementById('notification-message').innerText = message; document.getElementById('notification-modal').classList.remove('hidden'); }
+        function combinations(arr, k) { let result = []; function backtrack(start, currentCombo) { if (currentCombo.length === k) { result.push([...currentCombo]); return; } for (let i = start; i < arr.length; i++) { currentCombo.push(arr[i]); backtrack(i + 1, currentCombo); currentCombo.pop(); } } backtrack(0, []); return result; }
+        function percentile(arr, p) { if (arr.length === 0) return 0; const sorted = [...arr].sort((a,b)=>a-b); const pos = (sorted.length - 1) * (p / 100); const base = Math.floor(pos); const rest = pos - base; if (sorted[base + 1] !== undefined) { return sorted[base] + rest * (sorted[base + 1] - sorted[base]); } else { return sorted[base]; } }
+        function sample(arr, k) { const shuffled = [...arr].sort(() => 0.5 - Math.random()); return new Set(shuffled.slice(0, k)); }
 
     </script>
 </body>
