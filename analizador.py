@@ -12,18 +12,15 @@ from bs4 import BeautifulSoup
 import firebase_admin
 from firebase_admin import credentials, firestore
 import os
+import json # Importar json para manejar el secreto
 
 # --- CONFIGURACIÓN ---
-# 1. Reemplaza esta URL con la URL de tu base de datos de Firestore.
-#    La puedes encontrar en la configuración de tu proyecto de Firebase.
-FIREBASE_DATABASE_URL = 'https://tu-proyecto.firebaseio.com'
+# Estos valores se leerán desde las variables de entorno si están disponibles (para GitHub Actions)
+# o desde estas variables si se ejecuta localmente.
+FIREBASE_DATABASE_URL = os.environ.get('FIREBASE_DATABASE_URL', 'https://tu-proyecto.firebaseio.com')
+APP_ID = os.environ.get('APP_ID', 'tu-app-id-aqui')
 
-# 2. Reemplaza esto con el 'appId' de tu aplicación web en Firebase.
-#    Lo encuentras en el objeto de configuración de Firebase.
-APP_ID = '1:852396148354:web:fc430c9d8ffdb19ce1d69b'
-
-# 3. Asegúrate de que tu archivo de credenciales de Firebase se llame
-#    'firebase-credentials.json' y esté en la misma carpeta que este script.
+# El archivo de credenciales solo se usará si se ejecuta localmente.
 CREDENTIALS_FILE = 'analizadormelateretro-firebase-adminsdk-fbsvc-4129f33301.json'
 
 # URL de donde se extraen los resultados
@@ -38,15 +35,25 @@ def main():
 
     # --- 1. Conexión a Firebase ---
     try:
-        if not os.path.exists(CREDENTIALS_FILE):
-            print(f"ERROR: El archivo de credenciales '{CREDENTIALS_FILE}' no se encontró.")
-            print("Por favor, sigue la guía para descargarlo y colocarlo en la misma carpeta.")
+        if 'FIREBASE_CREDENTIALS' in os.environ:
+            # En GitHub Actions, lee las credenciales desde el secreto
+            print("Leyendo credenciales desde el secreto de GitHub...")
+            creds_json = json.loads(os.environ['FIREBASE_CREDENTIALS'])
+            cred = credentials.Certificate(creds_json)
+        elif os.path.exists(CREDENTIALS_FILE):
+            # En un entorno local, lee las credenciales desde el archivo
+            print(f"Leyendo credenciales desde el archivo local: {CREDENTIALS_FILE}...")
+            cred = credentials.Certificate(CREDENTIALS_FILE)
+        else:
+            print(f"ERROR: No se encontraron credenciales. Ni el secreto 'FIREBASE_CREDENTIALS' ni el archivo '{CREDENTIALS_FILE}' están disponibles.")
             return
+            
+        # Evitar re-inicialización si el script se importa en otro lugar
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred, {
+                'databaseURL': FIREBASE_DATABASE_URL
+            })
 
-        cred = credentials.Certificate(CREDENTIALS_FILE)
-        firebase_admin.initialize_app(cred, {
-            'databaseURL': FIREBASE_DATABASE_URL
-        })
         db = firestore.client()
         print("✅ Conexión a Firebase exitosa.")
     except Exception as e:
@@ -101,19 +108,13 @@ def main():
 
     # --- 3. Actualización de Firestore ---
     try:
-        # La ruta de la colección donde se guardan los resultados
         results_collection_path = f'artifacts/{APP_ID}/public/data/results'
-        
-        # El ID del documento será el número del sorteo, convertido a string
         doc_ref = db.collection(results_collection_path).document(str(sorteo_nuevo))
 
-        # Verificar si el documento ya existe
         if doc_ref.get().exists:
             print(f"ℹ️  El sorteo {sorteo_nuevo} ya existe en la base de datos. No se requiere acción.")
         else:
             print(f"Añadiendo el sorteo {sorteo_nuevo} a Firestore...")
-            
-            # Crear el objeto de datos que se va a guardar
             data_to_save = {
                 'sorteo': sorteo_nuevo,
                 'FECHA': fecha_nueva,
@@ -124,8 +125,6 @@ def main():
                 'F5': numeros_nuevos[4],
                 'F6': numeros_nuevos[5]
             }
-            
-            # Añadir el nuevo documento
             doc_ref.set(data_to_save)
             print(f"✅ ¡Éxito! El sorteo {sorteo_nuevo} ha sido añadido a la base de datos.")
 
