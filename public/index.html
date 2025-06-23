@@ -1,382 +1,1191 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Analizador Estadístico Melate Retro</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .stat-card { background-color: #1F2937; border: 1px solid #374151; }
-        .hot-number { background-color: #DC2626; color: white; }
-        .cold-number { background-color: #3B82F6; color: white; }
-        .modal-backdrop {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 1000;
-        }
-        .number-ball {
-            width: 2.5rem; height: 2.5rem;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 50%; font-weight: bold;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 2px 3px rgba(0,0,0,0.2);
-        }
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .stat-card {
+        background-color: #1f2937;
+        border: 1px solid #374151;
+      }
+      .hot-number {
+        background-color: #dc2626;
+        color: white;
+      }
+      .cold-number {
+        background-color: #3b82f6;
+        color: white;
+      }
+      .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .number-ball {
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4),
+          0 2px 3px rgba(0, 0, 0, 0.2);
+      }
     </style>
-</head>
-<body class="bg-gray-900 text-gray-200">
-
-    <div id="loading-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 flex justify-center items-center z-50">
-        <div class="flex flex-col items-center">
-            <i class="fas fa-spinner fa-spin fa-3x text-indigo-500"></i>
-            <p id="loading-message" class="mt-4 text-lg">Cargando...</p>
-        </div>
+  </head>
+  <body class="bg-gray-900 text-gray-200">
+    <div
+      id="loading-overlay"
+      class="hidden fixed inset-0 bg-gray-900 bg-opacity-80 flex justify-center items-center z-50"
+    >
+      <div class="flex flex-col items-center">
+        <i class="fas fa-spinner fa-spin fa-3x text-indigo-500"></i>
+        <p id="loading-message" class="mt-4 text-lg">Cargando...</p>
+      </div>
     </div>
-    
+
     <!-- Contenedor de Login -->
-    <div id="login-container" class="min-h-screen flex items-center justify-center">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
-            <h2 class="text-3xl font-bold text-center text-white mb-6">Iniciar Sesión</h2>
-            <p class="text-center text-gray-400 mb-6">Introduce tus credenciales para acceder al analizador.</p>
-            <form id="login-form">
-                <div class="mb-4">
-                    <label for="email" class="block text-gray-300 mb-2">Correo Electrónico</label>
-                    <input type="email" id="email" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <div class="mb-6">
-                    <label for="password" class="block text-gray-300 mb-2">Contraseña</label>
-                    <input type="password" id="password" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">
-                    Acceder
-                </button>
-            </form>
-        </div>
+    <div
+      id="login-container"
+      class="min-h-screen flex items-center justify-center"
+    >
+      <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
+        <h2 class="text-3xl font-bold text-center text-white mb-6">
+          Iniciar Sesión
+        </h2>
+        <p class="text-center text-gray-400 mb-6">
+          Introduce tus credenciales para acceder al analizador.
+        </p>
+        <form id="login-form">
+          <div class="mb-4">
+            <label for="email" class="block text-gray-300 mb-2"
+              >Correo Electrónico</label
+            >
+            <input
+              type="email"
+              id="email"
+              class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          <div class="mb-6">
+            <label for="password" class="block text-gray-300 mb-2"
+              >Contraseña</label
+            >
+            <input
+              type="password"
+              id="password"
+              class="w-full p-3 bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105"
+          >
+            Acceder
+          </button>
+        </form>
+      </div>
     </div>
-
 
     <!-- Contenedor Principal de la App (Oculto por defecto) -->
-    <div id="app-container" class="hidden container mx-auto p-4 md:p-8 max-w-7xl">
-        <header class="flex justify-between items-center mb-8">
-            <div class="text-left">
-                <h1 class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">
-                    Analizador Estadístico
-                </h1>
-                <p class="text-gray-400 mt-2">Bienvenido. Explora patrones y genera sugerencias.</p>
-                 <div id="auth-status" class="mt-4 text-xs text-gray-500"></div>
-            </div>
-            <button id="btn-logout" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg flex items-center">
-                <i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión
-            </button>
-        </header>
+    <div
+      id="app-container"
+      class="hidden container mx-auto p-4 md:p-8 max-w-7xl"
+    >
+      <header class="flex justify-between items-center mb-8">
+        <div class="text-left">
+          <h1
+            class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500"
+          >
+            Analizador Estadístico
+          </h1>
+          <p class="text-gray-400 mt-2">
+            Bienvenido. Explora patrones y genera sugerencias.
+          </p>
+          <div id="auth-status" class="mt-4 text-xs text-gray-500"></div>
+        </div>
+        <button
+          id="btn-logout"
+          class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg flex items-center"
+        >
+          <i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión
+        </button>
+      </header>
 
-        <main id="main-content">
-            <!-- Tarjeta del Último Sorteo -->
-            <div id="latest-draw-card" class="mb-8 p-6 bg-gray-800 rounded-lg shadow-xl border border-indigo-500/50">
-                <h2 class="text-2xl font-bold text-indigo-400 mb-4">Último Sorteo Registrado</h2>
-                <div id="latest-draw-content">
-                    <!-- Contenido se llenará con JS -->
+      <main id="main-content">
+        <!-- Tarjeta del Último Sorteo -->
+        <div
+          id="latest-draw-card"
+          class="mb-8 p-6 bg-gray-800 rounded-lg shadow-xl border border-indigo-500/50"
+        >
+          <h2 class="text-2xl font-bold text-indigo-400 mb-4">
+            Último Sorteo Registrado
+          </h2>
+          <div id="latest-draw-content">
+            <!-- Contenido se llenará con JS -->
+          </div>
+        </div>
+
+        <!-- Controles Principales -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
+          <button
+            id="btn-show-stats"
+            class="bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-chart-pie mr-3"></i>Estadísticas
+          </button>
+          <button
+            id="btn-show-history"
+            class="bg-blue-600 hover:bg-blue-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-history mr-3"></i>Histórico
+          </button>
+          <button
+            id="btn-show-generator"
+            class="bg-purple-600 hover:bg-purple-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-magic-wand-sparkles mr-3"></i>Generador
+          </button>
+          <button
+            id="btn-show-rater"
+            class="bg-cyan-600 hover:bg-cyan-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-star-half-alt mr-3"></i>Calificar
+          </button>
+          <button
+            id="btn-show-verifier"
+            class="bg-teal-600 hover:bg-teal-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-tasks mr-3"></i>Verificador
+          </button>
+          <button
+            id="btn-adjust-strategy"
+            class="bg-amber-600 hover:bg-amber-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-brain mr-3"></i>Mejorar
+          </button>
+          <button
+            id="btn-upload-csv"
+            class="bg-green-600 hover:bg-green-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-upload mr-3"></i>Cargar CSV
+          </button>
+        </div>
+
+        <!-- Dashboard de Estadísticas -->
+        <div id="stats-dashboard" class="hidden">
+          <h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">
+            Dashboard de Estadísticas
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="stat-card p-4 rounded-lg">
+              <h3 class="text-xl font-semibold mb-3">
+                <i class="fas fa-fire mr-2 text-red-500"></i>Frecuencia de
+                Números
+              </h3>
+              <div class="flex justify-between">
+                <div>
+                  <h4 class="font-bold text-red-400">🔥 Calientes</h4>
+                  <div id="hot-numbers" class="flex flex-wrap gap-2 mt-2"></div>
                 </div>
-            </div>
-
-            <!-- Controles Principales -->
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                <button id="btn-show-stats" class="bg-indigo-600 hover:bg-indigo-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
-                    <i class="fas fa-chart-pie mr-3"></i>Estadísticas
-                </button>
-                <button id="btn-show-history" class="bg-blue-600 hover:bg-blue-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
-                    <i class="fas fa-history mr-3"></i>Histórico
-                </button>
-                <button id="btn-show-generator" class="bg-purple-600 hover:bg-purple-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
-                    <i class="fas fa-magic-wand-sparkles mr-3"></i>Generador
-                </button>
-                 <button id="btn-show-verifier" class="bg-teal-600 hover:bg-teal-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
-                    <i class="fas fa-tasks mr-3"></i>Verificador
-                </button>
-                <button id="btn-adjust-strategy" class="bg-amber-600 hover:bg-amber-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
-                    <i class="fas fa-brain mr-3"></i>Mejorar
-                </button>
-                 <button id="btn-upload-csv" class="bg-green-600 hover:bg-green-700 p-4 rounded-lg shadow-lg flex items-center justify-center text-lg font-semibold transition-transform transform hover:scale-105">
-                    <i class="fas fa-upload mr-3"></i>Cargar CSV
-                </button>
-            </div>
-
-            <!-- Dashboard de Estadísticas -->
-            <div id="stats-dashboard" class="hidden">
-                 <h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">Dashboard de Estadísticas</h2>
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="stat-card p-4 rounded-lg">
-                        <h3 class="text-xl font-semibold mb-3"><i class="fas fa-fire mr-2 text-red-500"></i>Frecuencia de Números</h3>
-                        <div class="flex justify-between">
-                            <div><h4 class="font-bold text-red-400">🔥 Calientes</h4><div id="hot-numbers" class="flex flex-wrap gap-2 mt-2"></div></div>
-                            <div><h4 class="font-bold text-blue-400">❄️ Fríos</h4><div id="cold-numbers" class="flex flex-wrap gap-2 mt-2"></div></div>
-                        </div>
-                    </div>
-                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-hourglass-half mr-2 text-yellow-500"></i>Atraso de Números</h3><div id="atraso-numbers"></div></div>
-                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-link mr-2 text-green-500"></i>Pares Más Frecuentes</h3><div id="top-pairs"></div></div>
-                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-calculator mr-2 text-cyan-500"></i>Análisis de Sumas</h3><div id="sum-analysis"></div></div>
-                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-divide mr-2 text-pink-500"></i>Pares e Impares</h3><div id="odd-even-analysis"></div></div>
-                    <div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-balance-scale mr-2 text-orange-500"></i>Pesos de Estrategia</h3><div id="strategy-weights"></div></div>
+                <div>
+                  <h4 class="font-bold text-blue-400">❄️ Fríos</h4>
+                  <div
+                    id="cold-numbers"
+                    class="flex flex-wrap gap-2 mt-2"
+                  ></div>
                 </div>
+              </div>
             </div>
-            
-            <!-- Contenedor del Histórico -->
-            <div id="history-container" class="hidden"></div>
-             
-             <!-- Contenedor para Generador y Verificador -->
-            <div id="interactive-container" class="hidden mt-8"></div>
+            <div class="stat-card p-4 rounded-lg">
+              <h3 class="text-xl font-semibold mb-3">
+                <i class="fas fa-hourglass-half mr-2 text-yellow-500"></i>Atraso
+                de Números
+              </h3>
+              <div id="atraso-numbers"></div>
+            </div>
+            <div class="stat-card p-4 rounded-lg">
+              <h3 class="text-xl font-semibold mb-3">
+                <i class="fas fa-link mr-2 text-green-500"></i>Pares Más
+                Frecuentes
+              </h3>
+              <div id="top-pairs"></div>
+            </div>
+            <div class="stat-card p-4 rounded-lg">
+              <h3 class="text-xl font-semibold mb-3">
+                <i class="fas fa-calculator mr-2 text-cyan-500"></i>Análisis de
+                Sumas
+              </h3>
+              <div id="sum-analysis"></div>
+            </div>
+            <div class="stat-card p-4 rounded-lg">
+              <h3 class="text-xl font-semibold mb-3">
+                <i class="fas fa-divide mr-2 text-pink-500"></i>Pares e Impares
+              </h3>
+              <div id="odd-even-analysis"></div>
+            </div>
+            <div class="stat-card p-4 rounded-lg">
+              <h3 class="text-xl font-semibold mb-3">
+                <i class="fas fa-balance-scale mr-2 text-orange-500"></i>Pesos
+                de Estrategia
+              </h3>
+              <div id="strategy-weights"></div>
+            </div>
+          </div>
+        </div>
 
-            <div id="upload-container" class="hidden text-center mt-16 p-8 bg-gray-800 rounded-lg border-2 border-dashed border-gray-600">
-                <i class="fas fa-database fa-3x text-gray-500 mb-4"></i>
-                <h2 class="text-2xl font-bold mb-2">Base de Datos Vacía</h2>
-                <p class="text-gray-400 mb-6">Para comenzar, por favor carga el archivo CSV con los resultados históricos de Melate Retro.</p>
-                <button id="btn-trigger-upload" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105">
-                    <i class="fas fa-upload mr-2"></i>Seleccionar archivo CSV
-                </button>
-                <input type="file" id="csv-file-input" class="hidden" accept=".csv">
-            </div>
-        </main>
+        <!-- Contenedor del Histórico -->
+        <div id="history-container" class="hidden"></div>
+
+        <!-- Contenedor para Generador y Verificador -->
+        <div id="interactive-container" class="hidden mt-8"></div>
+
+        <div
+          id="upload-container"
+          class="hidden text-center mt-16 p-8 bg-gray-800 rounded-lg border-2 border-dashed border-gray-600"
+        >
+          <i class="fas fa-database fa-3x text-gray-500 mb-4"></i>
+          <h2 class="text-2xl font-bold mb-2">Base de Datos Vacía</h2>
+          <p class="text-gray-400 mb-6">
+            Para comenzar, por favor carga el archivo CSV con los resultados
+            históricos de Melate Retro.
+          </p>
+          <button
+            id="btn-trigger-upload"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-upload mr-2"></i>Seleccionar archivo CSV
+          </button>
+          <input type="file" id="csv-file-input" class="hidden" accept=".csv" />
+        </div>
+      </main>
     </div>
 
     <!-- Modal para notificaciones -->
     <div id="notification-modal" class="hidden modal-backdrop">
-        <div class="bg-gray-800 p-6 rounded-lg shadow-2xl max-w-sm w-full text-center">
-            <p id="notification-message" class="text-lg whitespace-pre-wrap"></p>
-            <button id="btn-close-notification" class="mt-6 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-semibold">Cerrar</button>
-        </div>
+      <div
+        class="bg-gray-800 p-6 rounded-lg shadow-2xl max-w-sm w-full text-center"
+      >
+        <p id="notification-message" class="text-lg whitespace-pre-wrap"></p>
+        <button
+          id="btn-close-notification"
+          class="mt-6 bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg font-semibold"
+        >
+          Cerrar
+        </button>
+      </div>
     </div>
 
     <script type="module">
-        // Importaciones de Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, getDoc, setDoc, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+      // Importaciones de Firebase
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+      import {
+        getAuth,
+        signInWithEmailAndPassword,
+        onAuthStateChanged,
+        signOut,
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        getDocs,
+        doc,
+        getDoc,
+        setDoc,
+        query,
+        orderBy,
+        writeBatch,
+      } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuración de Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyB3zfGgO63gc1VoWzQLeRsD09aoBMOazpg",
-  authDomain: "analizadormelateretro.firebaseapp.com",
-  projectId: "analizadormelateretro",
-  storageBucket: "analizadormelateretro.firebasestorage.app",
-  messagingSenderId: "852396148354",
-  appId: "1:852396148354:web:fc430c9d8ffdb19ce1d69b",
-  measurementId: "G-E0Z2VFNLT2"
-};
-        const appId = firebaseConfig.appId;
+      // Configuración de Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyB3zfGgO63gc1VoWzQLeRsD09aoBMOazpg",
+        authDomain: "analizadormelateretro.firebaseapp.com",
+        projectId: "analizadormelateretro",
+        storageBucket: "analizadormelateretro.firebasestorage.app",
+        messagingSenderId: "852396148354",
+        appId: "1:852396148354:web:fc430c9d8ffdb19ce1d69b",
+        measurementId: "G-E0Z2VFNLT2",
+      };
+      const appId = firebaseConfig.appId;
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        const resultsCollectionRef = collection(db, `artifacts/${appId}/public/data/results`);
-        const configDocRef = doc(db, `artifacts/${appId}/public/data/config/strategyWeights`);
-        
-        let fullHistory = [];
-        let analysis = {};
-        let strategyWeights = {};
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
 
-        // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
-        window.addEventListener('DOMContentLoaded', () => {
-            const loginForm = document.getElementById('login-form');
-            if (loginForm) {
-                loginForm.addEventListener('submit', handleLogin);
-            }
-            
-            onAuthStateChanged(auth, user => {
-                if (user) {
-                    document.getElementById('login-container').classList.add('hidden');
-                    document.getElementById('app-container').classList.remove('hidden');
-                    document.getElementById('auth-status').textContent = `Usuario: ${user.email}`;
-                    loadInitialData();
-                } else {
-                    document.getElementById('login-container').classList.remove('hidden');
-                    document.getElementById('app-container').classList.add('hidden');
-                }
-            });
-             document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
-             document.getElementById('btn-close-notification').addEventListener('click', () => {
-                document.getElementById('notification-modal').classList.add('hidden');
-            });
+      const resultsCollectionRef = collection(
+        db,
+        `artifacts/${appId}/public/data/results`
+      );
+      const configDocRef = doc(
+        db,
+        `artifacts/${appId}/public/data/config/strategyWeights`
+      );
+
+      let fullHistory = [];
+      let analysis = {};
+      let strategyWeights = {};
+
+      // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
+      window.addEventListener("DOMContentLoaded", () => {
+        const loginForm = document.getElementById("login-form");
+        if (loginForm) {
+          loginForm.addEventListener("submit", handleLogin);
+        }
+
+        onAuthStateChanged(auth, (user) => {
+          if (user) {
+            document.getElementById("login-container").classList.add("hidden");
+            document.getElementById("app-container").classList.remove("hidden");
+            document.getElementById(
+              "auth-status"
+            ).textContent = `Usuario: ${user.email}`;
+            loadInitialData();
+          } else {
+            document
+              .getElementById("login-container")
+              .classList.remove("hidden");
+            document.getElementById("app-container").classList.add("hidden");
+          }
         });
-        
-        async function handleLogin(e) {
-             e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const loadingOverlay = document.getElementById('loading-overlay');
-            loadingOverlay.classList.remove('hidden');
-            loadingOverlay.querySelector('#loading-message').textContent = 'Autenticando...';
+        document
+          .getElementById("btn-logout")
+          .addEventListener("click", () => signOut(auth));
+        document
+          .getElementById("btn-close-notification")
+          .addEventListener("click", () => {
+            document
+              .getElementById("notification-modal")
+              .classList.add("hidden");
+          });
+      });
 
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                console.error("Error de inicio de sesión:", error);
-                showNotification(`Error de inicio de sesión: ${error.message}`);
-            } finally {
-                loadingOverlay.classList.add('hidden');
-            }
-        }
-       
-        async function loadInitialData() {
-            const loadingOverlay = document.getElementById('loading-overlay');
-            try {
-                loadingOverlay.classList.remove('hidden');
-                loadingOverlay.querySelector('#loading-message').textContent = 'Cargando datos históricos...';
-                
-                const querySnapshot = await getDocs(query(resultsCollectionRef, orderBy("sorteo", "desc")));
-                fullHistory = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      async function handleLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const loadingOverlay = document.getElementById("loading-overlay");
+        loadingOverlay.classList.remove("hidden");
+        loadingOverlay.querySelector("#loading-message").textContent =
+          "Autenticando...";
 
-                if (fullHistory.length > 0) {
-                    loadingOverlay.querySelector('#loading-message').textContent = 'Cargando configuración...';
-                    const docSnap = await getDoc(configDocRef);
-                    strategyWeights = docSnap.exists() ? docSnap.data() : { suma_rango: 30, dist_par_impar: 25, mix_frio_caliente: 25, pares_frecuentes: 20 };
-                    
-                    loadingOverlay.querySelector('#loading-message').textContent = 'Realizando análisis...';
-                    performFullAnalysis();
-                    setupUI();
-                    displayLatestResult();
-                    document.getElementById('main-content').classList.remove('hidden');
-                    document.getElementById('upload-container').classList.add('hidden');
-                    
-                    switchView('stats-dashboard');
-                    displayStats();
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+          console.error("Error de inicio de sesión:", error);
+          showNotification(`Error de inicio de sesión: ${error.message}`);
+        } finally {
+          loadingOverlay.classList.add("hidden");
+        }
+      }
 
-                } else {
-                    document.getElementById('upload-container').classList.remove('hidden');
-                    setupUI(); 
-                }
-            } catch (error) {
-                console.error("Error al cargar datos iniciales:", error);
-                showNotification(`No se pudieron cargar los datos desde Firebase. Causa: ${error.message}`);
-                 document.getElementById('upload-container').classList.remove('hidden');
-                 setupUI();
-            } finally {
-                 loadingOverlay.classList.add('hidden');
-            }
-        }
-        
-        // --- MANEJO DE CARGA DE CSV ---
-        function setupUploadListeners() { const uploadButton = document.getElementById('btn-trigger-upload'); const fileInput = document.getElementById('csv-file-input'); if(uploadButton) uploadButton.addEventListener('click', () => fileInput.click()); if(fileInput) fileInput.addEventListener('change', handleFileUpload); const menuUploadButton = document.getElementById('btn-upload-csv'); if(menuUploadButton) menuUploadButton.addEventListener('click', () => fileInput.click());}
-        function handleFileUpload(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { const text = e.target.result; parseAndUploadCSV(text); }; reader.readAsText(file);}
-        async function parseAndUploadCSV(csvText) { document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('loading-message').textContent = 'Procesando y subiendo CSV...'; const lines = csvText.trim().split('\n'); const header = lines[0].split(',').map(h => h.trim()); const requiredHeaders = ['CONCURSO', 'FECHA', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6']; if (!requiredHeaders.every(h => header.includes(h))) { showNotification(`El archivo CSV no es válido. Columnas requeridas: ${requiredHeaders.join(', ')}`); document.getElementById('loading-overlay').classList.add('hidden'); return; } const records = lines.slice(1).map(line => { const values = line.split(','); const record = header.reduce((obj, h, i) => { obj[h] = values[i] ? values[i].trim() : ''; return obj; }, {}); return record; }); try { const batch = writeBatch(db); records.forEach(record => { const sorteoNum = parseInt(record.CONCURSO, 10); if (isNaN(sorteoNum)) return; const newDocRef = doc(resultsCollectionRef, String(sorteoNum)); batch.set(newDocRef, { sorteo: sorteoNum, FECHA: record.FECHA, F1: parseInt(record.F1, 10), F2: parseInt(record.F2, 10), F3: parseInt(record.F3, 10), F4: parseInt(record.F4, 10), F5: parseInt(record.F5, 10), F6: parseInt(record.F6, 10), }); }); await batch.commit(); showNotification(`¡Éxito! Se cargaron ${records.length} registros. La aplicación se recargará.`); setTimeout(() => window.location.reload(), 2000); } catch (error) { console.error("Error al subir el lote a Firestore:", error); showNotification("Ocurrió un error al subir los datos. Revisa la consola."); document.getElementById('loading-overlay').classList.add('hidden'); }}
-        
-        // --- LÓGICA DE ANÁLISIS, GENERACIÓN Y APRENDIZAJE ---
-        function performFullAnalysis() { const allNumbers = fullHistory.flatMap(draw => [draw.F1, draw.F2, draw.F3, draw.F4, draw.F5, draw.F6]); const numberCounts = allNumbers.reduce((acc, num) => { acc[num] = (acc[num] || 0) + 1; return acc; }, {}); analysis.frequencies = Object.entries(numberCounts).map(([num, freq]) => ({ number: parseInt(num), frequency: freq })).sort((a, b) => b.frequency - a.frequency); const lastDrawNumber = Math.max(...fullHistory.map(d => d.sorteo)); analysis.lags = Array.from({ length: 39 }, (_, i) => { const num = i + 1; const lastSeenDraw = fullHistory.find(d => [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].includes(num)); return { number: num, lag: lastSeenDraw ? lastDrawNumber - lastSeenDraw.sorteo : fullHistory.length }; }).sort((a,b) => b.lag - a.lag); const allPairs = fullHistory.flatMap(d => { const numbers = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].sort((a, b) => a - b); return Array.from(combinations(numbers, 2)); }); const pairCounts = allPairs.reduce((acc, pair) => { const key = JSON.stringify(pair); acc[key] = (acc[key] || 0) + 1; return acc; }, {}); analysis.topPairs = Object.entries(pairCounts).sort(([,a],[,b]) => b-a).slice(0, 10).map(([pair, count]) => ({ pair: JSON.parse(pair), count })); analysis.topPairsSet = new Set(analysis.topPairs.slice(0, 20).map(p => JSON.stringify(p.pair))); const oddEvenCounts = fullHistory.map(d => { const evens = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].filter(n => n % 2 === 0).length; return `${evens}P-${6-evens}I`; }).reduce((acc, dist) => { acc[dist] = (acc[dist] || 0) + 1; return acc; }, {}); analysis.oddEvenDistribution = Object.entries(oddEvenCounts).sort(([,a],[,b]) => b-a); analysis.topOddEven = analysis.oddEvenDistribution.slice(0,3).map(([dist]) => dist); const sums = fullHistory.map(d => d.F1+d.F2+d.F3+d.F4+d.F5+d.F6); const sumMean = sums.reduce((a, b) => a + b, 0) / sums.length; const sumStdDev = Math.sqrt(sums.map(x => Math.pow(x - sumMean, 2)).reduce((a, b) => a + b) / sums.length); analysis.sumAnalysis = { mean: sumMean.toFixed(2), std: sumStdDev.toFixed(2), min: Math.min(...sums), max: Math.max(...sums), q25: percentile(sums, 25), q75: percentile(sums, 75) }; }
-        function generateIntelligentCombinations(quantity) { const candidates = {}; const maxAttempts = Math.max(5000, quantity * 500); const freqs = analysis.frequencies; const cold = new Set(freqs.slice(-13).map(f => f.number)); const hot = new Set(freqs.slice(0, 13).map(f => f.number)); const maxScore = Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100; for (let i = 0; i < maxAttempts; i++) { const combo = new Set(); while(combo.size < 6) { combo.add(Math.floor(Math.random() * 39) + 1); } const comboArr = Array.from(combo).sort((a,b) => a-b); const comboKey = JSON.stringify(comboArr); if(candidates[comboKey]) continue; let score = 0; const comboSum = comboArr.reduce((a,b)=> a+b, 0); if (comboSum >= analysis.sumAnalysis.q25 && comboSum <= analysis.sumAnalysis.q75) { score += strategyWeights.suma_rango; } const evens = comboArr.filter(n => n % 2 === 0).length; const distStr = `${evens}P-${6-evens}I`; if (analysis.topOddEven.includes(distStr)) { score += strategyWeights.dist_par_impar; } const coldCount = comboArr.filter(n => cold.has(n)).length; const hotCount = comboArr.filter(n => hot.has(n)).length; if(coldCount > 0 && hotCount > 0 && (6 - coldCount - hotCount) > 0) { score += strategyWeights.mix_frio_caliente; } let pairHits = 0; for(const pair of combinations(comboArr, 2)) { if(analysis.topPairsSet.has(JSON.stringify(pair))) pairHits++; } score += Math.min(pairHits * 5, strategyWeights.pares_frecuentes); candidates[comboKey] = score; } const sortedCandidates = Object.entries(candidates).sort(([,a],[,b]) => b-a); return sortedCandidates.slice(0, quantity).map(([comboStr, score]) => { const confidence = (score / maxScore) * 100; let label = `Confianza: ${confidence.toFixed(0)}% (Baja)`; if(confidence >= 80) label = `Confianza: ${confidence.toFixed(0)}% (Alta)`; else if(confidence >= 60) label = `Confianza: ${confidence.toFixed(0)}% (Media)`; return { combination: JSON.parse(comboStr), confidence: label }; }); }
-        function generateSimpleCombinations(quantity, strategy) { const combinationsSet = new Set(); let attempts = 0; const maxAttempts = quantity * 100; const hotNumbers = analysis.frequencies.slice(0, 12).map(f => f.number); const coldNumbers = analysis.frequencies.slice(-12).map(f => f.number); const evenNumbers = Array.from({length: 19}, (_, i) => (i + 1) * 2); const oddNumbers = Array.from({length: 20}, (_, i) => i * 2 + 1); const sumMin = analysis.sumAnalysis.q25; const sumMax = analysis.sumAnalysis.q75; while(combinationsSet.size < quantity && attempts < maxAttempts) { let combo = []; if(strategy === 'calientes') combo = Array.from(sample(hotNumbers, 6)); else if(strategy === 'frios') combo = Array.from(sample(coldNumbers, 6)); else if(strategy === 'aleatorio') combo = Array.from(sample(Array.from({length:39}, (_, i) => i+1), 6)); else if(strategy === '3_pares_3_impares') combo = [...sample(evenNumbers, 3), ...sample(oddNumbers, 3)]; else if (strategy === 'suma_frecuente') { let tempCombo = Array.from(sample(Array.from({length:39}, (_, i) => i+1), 6)); let tempSum = tempCombo.reduce((a,b) => a+b, 0); if(tempSum >= sumMin && tempSum <= sumMax) combo = tempCombo; } if(combo.length === 6) { combinationsSet.add(JSON.stringify(combo.sort((a,b) => a-b))); } attempts++; } return Array.from(combinationsSet).map(c => ({ combination: JSON.parse(c), confidence: '(Estrategia Simple)' })); }
-        async function adjustStrategy() { if (fullHistory.length < 2) { showNotification("No hay suficientes datos para ajustar la estrategia."); return; } const lastDraw = fullHistory[0]; const winningCombo = [lastDraw.F1, lastDraw.F2, lastDraw.F3, lastDraw.F4, lastDraw.F5, lastDraw.F6].sort((a,b) => a-b); showNotification(`Analizando sorteo ${lastDraw.sorteo} para mejorar estrategia...`); const increaseFactor = 1.01; const decreaseFactor = 0.99; let changes = []; const winSum = winningCombo.reduce((a,b) => a+b, 0); if(winSum >= analysis.sumAnalysis.q25 && winSum <= analysis.sumAnalysis.q75) { strategyWeights.suma_rango *= increaseFactor; changes.push("Suma en rango: Peso aumentado."); } else { strategyWeights.suma_rango *= decreaseFactor; changes.push("Suma fuera de rango: Peso reducido."); } const evens = winningCombo.filter(n => n % 2 === 0).length; const distStr = `${evens}P-${6-evens}I`; if (analysis.topOddEven.includes(distStr)) { strategyWeights.dist_par_impar *= increaseFactor; changes.push(`Distribución ${distStr} es común: Peso aumentado.`); } else { strategyWeights.dist_par_impar *= decreaseFactor; changes.push(`Distribución ${distStr} no es común: Peso reducido.`); } try { await setDoc(configDocRef, strategyWeights); showNotification("¡Estrategia mejorada!\n" + changes.join("\n")); displayStrategyWeights(); } catch(e) { console.error("Error al guardar nuevos pesos: ", e); showNotification("Error al guardar la mejora de la estrategia."); } }
-        
-        // --- RENDERIZADO DE UI ---
-        function setupUI() {
-            document.getElementById('btn-show-stats').addEventListener('click', () => {
-                switchView('stats-dashboard');
-                displayStats();
-            });
-            document.getElementById('btn-show-history').addEventListener('click', () => {
-                switchView('history-container');
-                displayHistory();
-            });
-            document.getElementById('btn-show-generator').addEventListener('click', () => {
-                switchView('interactive-container');
-                displayGenerator();
-            });
-            document.getElementById('btn-show-verifier').addEventListener('click', () => {
-                switchView('interactive-container');
-                displayVerifier();
-            });
-            document.getElementById('btn-adjust-strategy').addEventListener('click', adjustStrategy);
-            setupUploadListeners();
-        }
+      async function loadInitialData() {
+        const loadingOverlay = document.getElementById("loading-overlay");
+        try {
+          loadingOverlay.classList.remove("hidden");
+          loadingOverlay.querySelector("#loading-message").textContent =
+            "Cargando datos históricos...";
 
-        function switchView(viewIdToShow) {
-            const mainViews = ['stats-dashboard', 'history-container', 'interactive-container'];
-            mainViews.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.classList.add('hidden');
-                }
-            });
-            const viewToShow = document.getElementById(viewIdToShow);
-            if (viewToShow) {
-                viewToShow.classList.remove('hidden');
-            }
+          const querySnapshot = await getDocs(
+            query(resultsCollectionRef, orderBy("sorteo", "desc"))
+          );
+          fullHistory = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+
+          if (fullHistory.length > 0) {
+            loadingOverlay.querySelector("#loading-message").textContent =
+              "Cargando configuración...";
+            const docSnap = await getDoc(configDocRef);
+            strategyWeights = docSnap.exists()
+              ? docSnap.data()
+              : {
+                  suma_rango: 30,
+                  dist_par_impar: 25,
+                  mix_frio_caliente: 25,
+                  pares_frecuentes: 20,
+                };
+
+            loadingOverlay.querySelector("#loading-message").textContent =
+              "Realizando análisis...";
+            performFullAnalysis();
+            setupUI();
+            displayLatestResult();
+            document.getElementById("main-content").classList.remove("hidden");
+            document.getElementById("upload-container").classList.add("hidden");
+
+            switchView("stats-dashboard");
+            displayStats();
+          } else {
+            document
+              .getElementById("upload-container")
+              .classList.remove("hidden");
+            setupUI();
+          }
+        } catch (error) {
+          console.error("Error al cargar datos iniciales:", error);
+          showNotification(
+            `No se pudieron cargar los datos desde Firebase. Causa: ${error.message}`
+          );
+          document
+            .getElementById("upload-container")
+            .classList.remove("hidden");
+          setupUI();
+        } finally {
+          loadingOverlay.classList.add("hidden");
         }
-        
-        function displayLatestResult() {
-            if (fullHistory.length === 0) {
-                document.getElementById('latest-draw-card').classList.add('hidden');
-                return;
-            };
-            document.getElementById('latest-draw-card').classList.remove('hidden');
-            const latest = fullHistory[0];
-            const numbers = [latest.F1, latest.F2, latest.F3, latest.F4, latest.F5, latest.F6];
-            const content = `
+      }
+
+      // --- MANEJO DE CARGA DE CSV ---
+      function setupUploadListeners() {
+        const uploadButton = document.getElementById("btn-trigger-upload");
+        const fileInput = document.getElementById("csv-file-input");
+        if (uploadButton)
+          uploadButton.addEventListener("click", () => fileInput.click());
+        if (fileInput) fileInput.addEventListener("change", handleFileUpload);
+        const menuUploadButton = document.getElementById("btn-upload-csv");
+        if (menuUploadButton)
+          menuUploadButton.addEventListener("click", () => fileInput.click());
+      }
+      function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const text = e.target.result;
+          parseAndUploadCSV(text);
+        };
+        reader.readAsText(file);
+      }
+      async function parseAndUploadCSV(csvText) {
+        document.getElementById("loading-overlay").classList.remove("hidden");
+        document.getElementById("loading-message").textContent =
+          "Procesando y subiendo CSV...";
+        const lines = csvText.trim().split("\n");
+        const header = lines[0].split(",").map((h) => h.trim());
+        const requiredHeaders = [
+          "CONCURSO",
+          "FECHA",
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+        ];
+        if (!requiredHeaders.every((h) => header.includes(h))) {
+          showNotification(
+            `El archivo CSV no es válido. Columnas requeridas: ${requiredHeaders.join(
+              ", "
+            )}`
+          );
+          document.getElementById("loading-overlay").classList.add("hidden");
+          return;
+        }
+        const records = lines.slice(1).map((line) => {
+          const values = line.split(",");
+          const record = header.reduce((obj, h, i) => {
+            obj[h] = values[i] ? values[i].trim() : "";
+            return obj;
+          }, {});
+          return record;
+        });
+        try {
+          const batch = writeBatch(db);
+          records.forEach((record) => {
+            const sorteoNum = parseInt(record.CONCURSO, 10);
+            if (isNaN(sorteoNum)) return;
+            const newDocRef = doc(resultsCollectionRef, String(sorteoNum));
+            batch.set(newDocRef, {
+              sorteo: sorteoNum,
+              FECHA: record.FECHA,
+              F1: parseInt(record.F1, 10),
+              F2: parseInt(record.F2, 10),
+              F3: parseInt(record.F3, 10),
+              F4: parseInt(record.F4, 10),
+              F5: parseInt(record.F5, 10),
+              F6: parseInt(record.F6, 10),
+            });
+          });
+          await batch.commit();
+          showNotification(
+            `¡Éxito! Se cargaron ${records.length} registros. La aplicación se recargará.`
+          );
+          setTimeout(() => window.location.reload(), 2000);
+        } catch (error) {
+          console.error("Error al subir el lote a Firestore:", error);
+          showNotification(
+            "Ocurrió un error al subir los datos. Revisa la consola."
+          );
+          document.getElementById("loading-overlay").classList.add("hidden");
+        }
+      }
+
+      // --- LÓGICA DE ANÁLISIS, GENERACIÓN Y APRENDIZAJE ---
+      function performFullAnalysis() {
+        const allNumbers = fullHistory.flatMap((draw) => [
+          draw.F1,
+          draw.F2,
+          draw.F3,
+          draw.F4,
+          draw.F5,
+          draw.F6,
+        ]);
+        const numberCounts = allNumbers.reduce((acc, num) => {
+          acc[num] = (acc[num] || 0) + 1;
+          return acc;
+        }, {});
+        analysis.frequencies = Object.entries(numberCounts)
+          .map(([num, freq]) => ({ number: parseInt(num), frequency: freq }))
+          .sort((a, b) => b.frequency - a.frequency);
+        const lastDrawNumber = Math.max(...fullHistory.map((d) => d.sorteo));
+        analysis.lags = Array.from({ length: 39 }, (_, i) => {
+          const num = i + 1;
+          const lastSeenDraw = fullHistory.find((d) =>
+            [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].includes(num)
+          );
+          return {
+            number: num,
+            lag: lastSeenDraw
+              ? lastDrawNumber - lastSeenDraw.sorteo
+              : fullHistory.length,
+          };
+        }).sort((a, b) => b.lag - a.lag);
+        const allPairs = fullHistory.flatMap((d) => {
+          const numbers = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].sort(
+            (a, b) => a - b
+          );
+          return Array.from(combinations(numbers, 2));
+        });
+        const pairCounts = allPairs.reduce((acc, pair) => {
+          const key = JSON.stringify(pair);
+          acc[key] = (acc[key] || 0) + 1;
+          return acc;
+        }, {});
+        analysis.topPairs = Object.entries(pairCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 10)
+          .map(([pair, count]) => ({ pair: JSON.parse(pair), count }));
+        analysis.topPairsSet = new Set(
+          analysis.topPairs.slice(0, 20).map((p) => JSON.stringify(p.pair))
+        );
+        const oddEvenCounts = fullHistory
+          .map((d) => {
+            const evens = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].filter(
+              (n) => n % 2 === 0
+            ).length;
+            return `${evens}P-${6 - evens}I`;
+          })
+          .reduce((acc, dist) => {
+            acc[dist] = (acc[dist] || 0) + 1;
+            return acc;
+          }, {});
+        analysis.oddEvenDistribution = Object.entries(oddEvenCounts).sort(
+          ([, a], [, b]) => b - a
+        );
+        analysis.topOddEven = analysis.oddEvenDistribution
+          .slice(0, 3)
+          .map(([dist]) => dist);
+        const sums = fullHistory.map(
+          (d) => d.F1 + d.F2 + d.F3 + d.F4 + d.F5 + d.F6
+        );
+        const sumMean = sums.reduce((a, b) => a + b, 0) / sums.length;
+        const sumStdDev = Math.sqrt(
+          sums.map((x) => Math.pow(x - sumMean, 2)).reduce((a, b) => a + b) /
+            sums.length
+        );
+        analysis.sumAnalysis = {
+          mean: sumMean.toFixed(2),
+          std: sumStdDev.toFixed(2),
+          min: Math.min(...sums),
+          max: Math.max(...sums),
+          q25: percentile(sums, 25),
+          q75: percentile(sums, 75),
+        };
+      }
+      function generateIntelligentCombinations(quantity) {
+        const candidates = {};
+        const maxAttempts = Math.max(5000, quantity * 500);
+        const freqs = analysis.frequencies;
+        const cold = new Set(freqs.slice(-13).map((f) => f.number));
+        const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
+        const maxScore =
+          Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
+        for (let i = 0; i < maxAttempts; i++) {
+          const combo = new Set();
+          while (combo.size < 6) {
+            combo.add(Math.floor(Math.random() * 39) + 1);
+          }
+          const comboArr = Array.from(combo).sort((a, b) => a - b);
+          const comboKey = JSON.stringify(comboArr);
+          if (candidates[comboKey]) continue;
+          let score = 0;
+          const comboSum = comboArr.reduce((a, b) => a + b, 0);
+          if (
+            comboSum >= analysis.sumAnalysis.q25 &&
+            comboSum <= analysis.sumAnalysis.q75
+          ) {
+            score += strategyWeights.suma_rango;
+          }
+          const evens = comboArr.filter((n) => n % 2 === 0).length;
+          const distStr = `${evens}P-${6 - evens}I`;
+          if (analysis.topOddEven.includes(distStr)) {
+            score += strategyWeights.dist_par_impar;
+          }
+          const coldCount = comboArr.filter((n) => cold.has(n)).length;
+          const hotCount = comboArr.filter((n) => hot.has(n)).length;
+          if (coldCount > 0 && hotCount > 0 && 6 - coldCount - hotCount > 0) {
+            score += strategyWeights.mix_frio_caliente;
+          }
+          let pairHits = 0;
+          for (const pair of combinations(comboArr, 2)) {
+            if (analysis.topPairsSet.has(JSON.stringify(pair))) pairHits++;
+          }
+          score += Math.min(pairHits * 5, strategyWeights.pares_frecuentes);
+          candidates[comboKey] = score;
+        }
+        const sortedCandidates = Object.entries(candidates).sort(
+          ([, a], [, b]) => b - a
+        );
+        return sortedCandidates.slice(0, quantity).map(([comboStr, score]) => {
+          const confidence = (score / maxScore) * 100;
+          let label = `Confianza: ${confidence.toFixed(0)}% (Baja)`;
+          if (confidence >= 80)
+            label = `Confianza: ${confidence.toFixed(0)}% (Alta)`;
+          else if (confidence >= 60)
+            label = `Confianza: ${confidence.toFixed(0)}% (Media)`;
+          return { combination: JSON.parse(comboStr), confidence: label };
+        });
+      }
+      function generateSimpleCombinations(quantity, strategy) {
+        const combinationsSet = new Set();
+        let attempts = 0;
+        const maxAttempts = quantity * 100;
+        const hotNumbers = analysis.frequencies
+          .slice(0, 12)
+          .map((f) => f.number);
+        const coldNumbers = analysis.frequencies
+          .slice(-12)
+          .map((f) => f.number);
+        const evenNumbers = Array.from({ length: 19 }, (_, i) => (i + 1) * 2);
+        const oddNumbers = Array.from({ length: 20 }, (_, i) => i * 2 + 1);
+        const sumMin = analysis.sumAnalysis.q25;
+        const sumMax = analysis.sumAnalysis.q75;
+        while (combinationsSet.size < quantity && attempts < maxAttempts) {
+          let combo = [];
+          if (strategy === "calientes")
+            combo = Array.from(sample(hotNumbers, 6));
+          else if (strategy === "frios")
+            combo = Array.from(sample(coldNumbers, 6));
+          else if (strategy === "aleatorio")
+            combo = Array.from(
+              sample(
+                Array.from({ length: 39 }, (_, i) => i + 1),
+                6
+              )
+            );
+          else if (strategy === "3_pares_3_impares")
+            combo = [...sample(evenNumbers, 3), ...sample(oddNumbers, 3)];
+          else if (strategy === "suma_frecuente") {
+            let tempCombo = Array.from(
+              sample(
+                Array.from({ length: 39 }, (_, i) => i + 1),
+                6
+              )
+            );
+            let tempSum = tempCombo.reduce((a, b) => a + b, 0);
+            if (tempSum >= sumMin && tempSum <= sumMax) combo = tempCombo;
+          }
+          if (combo.length === 6) {
+            combinationsSet.add(JSON.stringify(combo.sort((a, b) => a - b)));
+          }
+          attempts++;
+        }
+        return Array.from(combinationsSet).map((c) => ({
+          combination: JSON.parse(c),
+          confidence: "(Estrategia Simple)",
+        }));
+      }
+      async function adjustStrategy() {
+        if (fullHistory.length < 2) {
+          showNotification(
+            "No hay suficientes datos para ajustar la estrategia."
+          );
+          return;
+        }
+        const lastDraw = fullHistory[0];
+        const winningCombo = [
+          lastDraw.F1,
+          lastDraw.F2,
+          lastDraw.F3,
+          lastDraw.F4,
+          lastDraw.F5,
+          lastDraw.F6,
+        ].sort((a, b) => a - b);
+        showNotification(
+          `Analizando sorteo ${lastDraw.sorteo} para mejorar estrategia...`
+        );
+        const increaseFactor = 1.01;
+        const decreaseFactor = 0.99;
+        let changes = [];
+        const winSum = winningCombo.reduce((a, b) => a + b, 0);
+        if (
+          winSum >= analysis.sumAnalysis.q25 &&
+          winSum <= analysis.sumAnalysis.q75
+        ) {
+          strategyWeights.suma_rango *= increaseFactor;
+          changes.push("Suma en rango: Peso aumentado.");
+        } else {
+          strategyWeights.suma_rango *= decreaseFactor;
+          changes.push("Suma fuera de rango: Peso reducido.");
+        }
+        const evens = winningCombo.filter((n) => n % 2 === 0).length;
+        const distStr = `${evens}P-${6 - evens}I`;
+        if (analysis.topOddEven.includes(distStr)) {
+          strategyWeights.dist_par_impar *= increaseFactor;
+          changes.push(`Distribución ${distStr} es común: Peso aumentado.`);
+        } else {
+          strategyWeights.dist_par_impar *= decreaseFactor;
+          changes.push(`Distribución ${distStr} no es común: Peso reducido.`);
+        }
+        try {
+          await setDoc(configDocRef, strategyWeights);
+          showNotification("¡Estrategia mejorada!\n" + changes.join("\n"));
+          displayStrategyWeights();
+        } catch (e) {
+          console.error("Error al guardar nuevos pesos: ", e);
+          showNotification("Error al guardar la mejora de la estrategia.");
+        }
+      }
+
+      // --- RENDERIZADO DE UI ---
+      function setupUI() {
+        document
+          .getElementById("btn-show-stats")
+          .addEventListener("click", () => {
+            switchView("stats-dashboard");
+            displayStats();
+          });
+        document
+          .getElementById("btn-show-history")
+          .addEventListener("click", () => {
+            switchView("history-container");
+            displayHistory();
+          });
+        document
+          .getElementById("btn-show-generator")
+          .addEventListener("click", () => {
+            switchView("interactive-container");
+            displayGenerator();
+          });
+        document
+          .getElementById("btn-show-rater")
+          .addEventListener("click", () => {
+            switchView("interactive-container");
+            displayRater();
+          });
+        document
+          .getElementById("btn-show-verifier")
+          .addEventListener("click", () => {
+            switchView("interactive-container");
+            displayVerifier();
+          });
+        document
+          .getElementById("btn-adjust-strategy")
+          .addEventListener("click", adjustStrategy);
+        setupUploadListeners();
+      }
+
+      function switchView(viewIdToShow) {
+        const mainViews = [
+          "stats-dashboard",
+          "history-container",
+          "interactive-container",
+        ];
+        mainViews.forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.classList.add("hidden");
+        });
+        const viewToShow = document.getElementById(viewIdToShow);
+        if (viewToShow) viewToShow.classList.remove("hidden");
+      }
+
+      function displayLatestResult() {
+        if (fullHistory.length === 0) {
+          document.getElementById("latest-draw-card").classList.add("hidden");
+          return;
+        }
+        document.getElementById("latest-draw-card").classList.remove("hidden");
+        const latest = fullHistory[0];
+        const numbers = [
+          latest.F1,
+          latest.F2,
+          latest.F3,
+          latest.F4,
+          latest.F5,
+          latest.F6,
+        ];
+        document.getElementById("latest-draw-content").innerHTML = `
                 <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div>
-                        <p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${latest.sorteo}</span></p>
-                        <p class="text-gray-400">Fecha: <span class="font-bold text-white">${latest.FECHA}</span></p>
+                    <div><p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${
+                      latest.sorteo
+                    }</span></p><p class="text-gray-400">Fecha: <span class="font-bold text-white">${
+          latest.FECHA
+        }</span></p></div>
+                    <div class="flex space-x-2 mt-4 md:mt-0">${numbers
+                      .map(
+                        (n) =>
+                          `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`
+                      )
+                      .join("")}</div>
+                </div>`;
+      }
+
+      function displayHistory() {
+        const container = document.getElementById("history-container");
+        let tableHTML = `<h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">Histórico de Resultados</h2><div class="overflow-x-auto stat-card rounded-lg"><table class="w-full text-sm text-left"><thead class="text-xs text-gray-300 uppercase bg-gray-700"><tr><th scope="col" class="px-6 py-3">Sorteo</th><th scope="col" class="px-6 py-3">Fecha</th><th scope="col" class="px-6 py-3">Combinación Ganadora</th></tr></thead><tbody>`;
+        fullHistory.forEach((draw) => {
+          const numbers = [
+            draw.F1,
+            draw.F2,
+            draw.F3,
+            draw.F4,
+            draw.F5,
+            draw.F6,
+          ].join(", ");
+          tableHTML += `<tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50"><td class="px-6 py-4 font-medium">${draw.sorteo}</td><td class="px-6 py-4">${draw.FECHA}</td><td class="px-6 py-4 font-mono">${numbers}</td></tr>`;
+        });
+        tableHTML += `</tbody></table></div>`;
+        container.innerHTML = tableHTML;
+      }
+
+      function displayStats() {
+        if (!analysis || !analysis.frequencies) return;
+        document.getElementById("hot-numbers").innerHTML = analysis.frequencies
+          .slice(0, 5)
+          .map(
+            (item) =>
+              `<span class="hot-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`
+          )
+          .join("");
+        document.getElementById("cold-numbers").innerHTML = analysis.frequencies
+          .slice(-5)
+          .map(
+            (item) =>
+              `<span class="cold-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`
+          )
+          .join("");
+        document.getElementById("atraso-numbers").innerHTML = analysis.lags
+          .slice(0, 5)
+          .map(
+            (item) =>
+              `<div class="flex justify-between items-center text-sm mb-1"><span>Número <b>${item.number}</b>:</span> <span class="font-semibold">${item.lag} sorteos</span></div>`
+          )
+          .join("");
+        document.getElementById("top-pairs").innerHTML = analysis.topPairs
+          .slice(0, 5)
+          .map(
+            (item) =>
+              `<div class="flex justify-between items-center text-sm mb-1"><span>Par <b>${item.pair.join(
+                ", "
+              )}</b>:</span> <span class="font-semibold">${
+                item.count
+              } veces</span></div>`
+          )
+          .join("");
+        document.getElementById(
+          "sum-analysis"
+        ).innerHTML = `<p class="text-sm">Suma Promedio: <b>${analysis.sumAnalysis.mean}</b></p><p class="text-sm">Rango Frecuente (25%-75%): <b>${analysis.sumAnalysis.q25} - ${analysis.sumAnalysis.q75}</b></p>`;
+        document.getElementById("odd-even-analysis").innerHTML =
+          analysis.oddEvenDistribution
+            .slice(0, 3)
+            .map(
+              ([dist, count]) =>
+                `<div class="flex justify-between items-center text-sm mb-1"><span><b>${dist}</b>:</span> <span class="font-semibold">${count} veces</span></div>`
+            )
+            .join("");
+        displayStrategyWeights();
+      }
+      function displayStrategyWeights() {
+        document.getElementById("strategy-weights").innerHTML = Object.entries(
+          strategyWeights
+        )
+          .map(
+            ([key, val]) =>
+              `<div class="flex justify-between items-center text-sm mb-1"><span>${key
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (l) =>
+                  l.toUpperCase()
+                )}:</span><span class="font-semibold">${val.toFixed(
+                2
+              )}</span></div>`
+          )
+          .join("");
+      }
+      function displayGenerator() {
+        const container = document.getElementById("interactive-container");
+        container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Generador de Combinaciones</h2><div class="flex flex-col space-y-4"><div><label for="strategy-select" class="block mb-2 font-semibold">Elige una Estrategia:</label><select id="strategy-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="inteligente">Estrategia Inteligente (Recomendado)</option><option value="calientes">Usar Números Calientes</option><option value="frios">Usar Números Fríos</option><option value="3_pares_3_impares">3 Pares y 3 Impares</option><option value="suma_frecuente">Suma en Rango Frecuente</option><option value="aleatorio">Completamente Aleatorio</option></select></div><div><label for="quantity-input" class="block mb-2 font-semibold">Cantidad de Combinaciones:</label><input id="quantity-input" type="number" value="10" min="1" max="50" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"></div><button id="btn-generate" class="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded-lg text-lg font-semibold">Generar</button></div><div id="results-container" class="mt-6"></div></div>`;
+        document
+          .getElementById("btn-generate")
+          .addEventListener("click", handleGeneration);
+      }
+      function handleGeneration() {
+        const strategy = document.getElementById("strategy-select").value;
+        const quantity = parseInt(
+          document.getElementById("quantity-input").value
+        );
+        let results;
+        if (strategy === "inteligente") {
+          results = generateIntelligentCombinations(quantity);
+        } else {
+          results = generateSimpleCombinations(quantity, strategy);
+        }
+        const resultsContainer = document.getElementById("results-container");
+        resultsContainer.innerHTML =
+          `<h3 class="text-xl font-semibold mb-3">Combinaciones Sugeridas</h3>` +
+          results
+            .map(
+              (res) =>
+                `<div class="flex items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex space-x-2">${res.combination
+                  .map(
+                    (n) =>
+                      `<span class="bg-gray-600 w-10 h-10 flex items-center justify-center font-bold rounded-full">${n}</span>`
+                  )
+                  .join("")}</div><span class="text-sm text-gray-400">${
+                  res.confidence
+                }</span></div>`
+            )
+            .join("");
+      }
+      function displayVerifier() {
+        const container = document.getElementById("interactive-container");
+        container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Verificador de Histórico (Backtesting)</h2><p class="text-gray-400 mb-4">Introduce 6 números separados por comas para ver su rendimiento histórico.</p><div class="flex flex-col space-y-4"><input id="verifier-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-verify" class="w-full bg-teal-600 hover:bg-teal-700 p-3 rounded-lg text-lg font-semibold">Verificar</button></div><div id="verifier-results" class="mt-6"></div></div>`;
+        document
+          .getElementById("btn-verify")
+          .addEventListener("click", handleVerification);
+      }
+      function handleVerification() {
+        const input = document.getElementById("verifier-input").value;
+        const numbers = input
+          .split(",")
+          .map((n) => parseInt(n.trim()))
+          .filter((n) => !isNaN(n) && n >= 1 && n <= 39);
+        if (numbers.length !== 6) {
+          showNotification(
+            "Por favor, introduce exactamente 6 números válidos."
+          );
+          return;
+        }
+        const userSet = new Set(numbers);
+        const counts = { 6: 0, 5: 0, 4: 0, 3: 0, 2: 0 };
+        fullHistory.forEach((draw) => {
+          const drawSet = new Set([
+            draw.F1,
+            draw.F2,
+            draw.F3,
+            draw.F4,
+            draw.F5,
+            draw.F6,
+          ]);
+          const intersection = new Set(
+            [...userSet].filter((x) => drawSet.has(x))
+          );
+          const hits = intersection.size;
+          if (hits >= 2) {
+            counts[hits]++;
+          }
+        });
+        const resultsContainer = document.getElementById("verifier-results");
+        resultsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-3">Resultados para: [${numbers.join(
+          ", "
+        )}]</h3>${Object.entries(counts)
+          .reverse()
+          .map(
+            ([hits, count]) =>
+              `<div class="flex justify-between text-sm mb-1"><span>Aciertos de <b>${hits}</b> números:</span><span class="font-semibold">${count} veces</span></div>`
+          )
+          .join("")}`;
+      }
+      function displayRater() {
+        const container = document.getElementById("interactive-container");
+        container.innerHTML = `
+                <div class="stat-card p-6 rounded-lg">
+                    <h2 class="text-2xl font-bold mb-4">Calificador de Combinaciones</h2>
+                    <p class="text-gray-400 mb-4">Introduce 6 números para ver su calificación estadística basada en las reglas actuales.</p>
+                    <div class="flex flex-col space-y-4">
+                        <input id="rater-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600">
+                        <button id="btn-rate" class="w-full bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg text-lg font-semibold">Calificar Combinación</button>
                     </div>
-                    <div class="flex space-x-2 mt-4 md:mt-0">
-                         ${numbers.map(n => `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`).join('')}
+                    <div id="rater-results" class="mt-6"></div>
+                </div>`;
+        document
+          .getElementById("btn-rate")
+          .addEventListener("click", handleRating);
+      }
+      function handleRating() {
+        const input = document.getElementById("rater-input").value;
+        const numbers = input
+          .split(",")
+          .map((n) => parseInt(n.trim()))
+          .filter((n) => !isNaN(n) && n >= 1 && n <= 39);
+
+        if (numbers.length !== 6) {
+          showNotification(
+            "Por favor, introduce exactamente 6 números válidos."
+          );
+          return;
+        }
+        const uniqueNumbers = [...new Set(numbers)];
+        if (uniqueNumbers.length !== 6) {
+          showNotification("Los números deben ser únicos.");
+          return;
+        }
+
+        const { confidence, breakdown } = rateCombination(
+          uniqueNumbers.sort((a, b) => a - b)
+        );
+
+        let breakdownHTML = Object.entries(breakdown)
+          .map(([rule, score]) => {
+            const color = score > 0 ? "text-green-400" : "text-gray-500";
+            return `<div class="flex justify-between text-sm"><span class="text-gray-300">${rule}:</span><span class="font-semibold ${color}">+${score.toFixed(
+              2
+            )} pts</span></div>`;
+          })
+          .join("");
+
+        const resultsContainer = document.getElementById("rater-results");
+        resultsContainer.innerHTML = `
+                <h3 class="text-xl font-semibold mb-3">Calificación para: [${uniqueNumbers.join(
+                  ", "
+                )}]</h3>
+                <div class="space-y-2 p-4 bg-gray-800 rounded-md">
+                    ${breakdownHTML}
+                    <div class="border-t border-gray-600 mt-3 pt-3 flex justify-between font-bold text-lg text-indigo-400">
+                        <span>Confianza Final:</span>
+                        <span>${confidence.toFixed(0)}%</span>
                     </div>
                 </div>
             `;
-            document.getElementById('latest-draw-content').innerHTML = content;
-        }
-        
-        function displayHistory() {
-            const container = document.getElementById('history-container');
-            let tableHTML = `
-                <h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">Histórico de Resultados</h2>
-                <div class="overflow-x-auto stat-card rounded-lg">
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-300 uppercase bg-gray-700">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">Sorteo</th>
-                                <th scope="col" class="px-6 py-3">Fecha</th>
-                                <th scope="col" class="px-6 py-3">Combinación Ganadora</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-            fullHistory.forEach(draw => {
-                const numbers = [draw.F1, draw.F2, draw.F3, draw.F4, draw.F5, draw.F6].join(', ');
-                tableHTML += `
-                    <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-700/50">
-                        <td class="px-6 py-4 font-medium">${draw.sorteo}</td>
-                        <td class="px-6 py-4">${draw.FECHA}</td>
-                        <td class="px-6 py-4 font-mono">${numbers}</td>
-                    </tr>
-                `;
-            });
-            tableHTML += `</tbody></table></div>`;
-            container.innerHTML = tableHTML;
-        }
+      }
+      function rateCombination(comboArr) {
+        let score = 0;
+        const maxScore =
+          Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
+        let breakdown = {};
 
-        function displayStats() {
-            if(!analysis || !analysis.frequencies) return;
-            document.getElementById('hot-numbers').innerHTML = analysis.frequencies.slice(0, 5).map(item => `<span class="hot-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`).join('');
-            document.getElementById('cold-numbers').innerHTML = analysis.frequencies.slice(-5).map(item => `<span class="cold-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`).join('');
-            document.getElementById('atraso-numbers').innerHTML = analysis.lags.slice(0,5).map(item => `<div class="flex justify-between items-center text-sm mb-1"><span>Número <b>${item.number}</b>:</span> <span class="font-semibold">${item.lag} sorteos</span></div>`).join('');
-            document.getElementById('top-pairs').innerHTML = analysis.topPairs.slice(0, 5).map(item => `<div class="flex justify-between items-center text-sm mb-1"><span>Par <b>${item.pair.join(', ')}</b>:</span> <span class="font-semibold">${item.count} veces</span></div>`).join('');
-            document.getElementById('sum-analysis').innerHTML = `<p class="text-sm">Suma Promedio: <b>${analysis.sumAnalysis.mean}</b></p><p class="text-sm">Rango Frecuente (25%-75%): <b>${analysis.sumAnalysis.q25} - ${analysis.sumAnalysis.q75}</b></p>`;
-            document.getElementById('odd-even-analysis').innerHTML = analysis.oddEvenDistribution.slice(0,3).map(([dist, count]) => `<div class="flex justify-between items-center text-sm mb-1"><span><b>${dist}</b>:</span> <span class="font-semibold">${count} veces</span></div>`).join('');
-            displayStrategyWeights();
-        }
-        function displayStrategyWeights() { document.getElementById('strategy-weights').innerHTML = Object.entries(strategyWeights).map(([key, val]) => `<div class="flex justify-between items-center text-sm mb-1"><span>${key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</span><span class="font-semibold">${val.toFixed(2)}</span></div>`).join(''); }
-        function displayGenerator() { const container = document.getElementById('interactive-container'); container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Generador de Combinaciones</h2><div class="flex flex-col space-y-4"><div><label for="strategy-select" class="block mb-2 font-semibold">Elige una Estrategia:</label><select id="strategy-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="inteligente">Estrategia Inteligente (Recomendado)</option><option value="calientes">Usar Números Calientes</option><option value="frios">Usar Números Fríos</option><option value="3_pares_3_impares">3 Pares y 3 Impares</option><option value="suma_frecuente">Suma en Rango Frecuente</option><option value="aleatorio">Completamente Aleatorio</option></select></div><div><label for="quantity-input" class="block mb-2 font-semibold">Cantidad de Combinaciones:</label><input id="quantity-input" type="number" value="10" min="1" max="50" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"></div><button id="btn-generate" class="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded-lg text-lg font-semibold">Generar</button></div><div id="results-container" class="mt-6"></div></div>`; document.getElementById('btn-generate').addEventListener('click', handleGeneration); }
-        function handleGeneration() { const strategy = document.getElementById('strategy-select').value; const quantity = parseInt(document.getElementById('quantity-input').value); let results; if(strategy === 'inteligente') { results = generateIntelligentCombinations(quantity); } else { results = generateSimpleCombinations(quantity, strategy); } const resultsContainer = document.getElementById('results-container'); resultsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-3">Combinaciones Sugeridas</h3>` + results.map(res => `<div class="flex items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex space-x-2">${res.combination.map(n => `<span class="bg-gray-600 w-10 h-10 flex items-center justify-center font-bold rounded-full">${n}</span>`).join('')}</div><span class="text-sm text-gray-400">${res.confidence}</span></div>`).join(''); }
-        function displayVerifier() { const container = document.getElementById('interactive-container'); container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Verificador de Histórico (Backtesting)</h2><p class="text-gray-400 mb-4">Introduce 6 números separados por comas para ver su rendimiento histórico.</p><div class="flex flex-col space-y-4"><input id="verifier-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-verify" class="w-full bg-teal-600 hover:bg-teal-700 p-3 rounded-lg text-lg font-semibold">Verificar</button></div><div id="verifier-results" class="mt-6"></div></div>`; document.getElementById('btn-verify').addEventListener('click', handleVerification); }
-        function handleVerification() { const input = document.getElementById('verifier-input').value; const numbers = input.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 39); if (numbers.length !== 6) { showNotification("Por favor, introduce exactamente 6 números válidos."); return; } const userSet = new Set(numbers); const counts = { 6: 0, 5: 0, 4: 0, 3: 0, 2: 0 }; fullHistory.forEach(draw => { const drawSet = new Set([draw.F1, draw.F2, draw.F3, draw.F4, draw.F5, draw.F6]); const intersection = new Set([...userSet].filter(x => drawSet.has(x))); const hits = intersection.size; if (hits >= 2) { counts[hits]++; } }); const resultsContainer = document.getElementById('verifier-results'); resultsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-3">Resultados para: [${numbers.join(', ')}]</h3>${Object.entries(counts).reverse().map(([hits, count]) => `<div class="flex justify-between text-sm mb-1"><span>Aciertos de <b>${hits}</b> números:</span><span class="font-semibold">${count} veces</span></div>`).join('')}`; }
-        
-        // --- FUNCIONES DE UTILIDAD ---
-        function showNotification(message) { document.getElementById('notification-message').innerText = message; document.getElementById('notification-modal').classList.remove('hidden'); }
-        function combinations(arr, k) { let result = []; function backtrack(start, currentCombo) { if (currentCombo.length === k) { result.push([...currentCombo]); return; } for (let i = start; i < arr.length; i++) { currentCombo.push(arr[i]); backtrack(i + 1, currentCombo); currentCombo.pop(); } } backtrack(0, []); return result; }
-        function percentile(arr, p) { if (arr.length === 0) return 0; const sorted = [...arr].sort((a,b)=>a-b); const pos = (sorted.length - 1) * (p / 100); const base = Math.floor(pos); const rest = pos - base; if (sorted[base + 1] !== undefined) { return sorted[base] + rest * (sorted[base + 1] - sorted[base]); } else { return sorted[base]; } }
-        function sample(arr, k) { const shuffled = [...arr].sort(() => 0.5 - Math.random()); return new Set(shuffled.slice(0, k)); }
+        const freqs = analysis.frequencies;
+        const cold = new Set(freqs.slice(-13).map((f) => f.number));
+        const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
+        const medios = new Set(
+          analysis.frequencies.slice(13, 26).map((f) => f.number)
+        );
+        const comboSet = new Set(comboArr);
 
+        let sumaScore = 0;
+        if (
+          sum(comboArr) >= analysis.sumAnalysis.q25 &&
+          sum(comboArr) <= analysis.sumAnalysis.q75
+        )
+          sumaScore = strategyWeights.suma_rango;
+        score += sumaScore;
+        breakdown["Regla de Suma"] = sumaScore;
+
+        let parImparScore = 0;
+        const evens = comboArr.filter((n) => n % 2 === 0).length;
+        if (analysis.topOddEven.includes(`${evens}P-${6 - evens}I`))
+          parImparScore = strategyWeights.dist_par_impar;
+        score += parImparScore;
+        breakdown["Regla Par/Impar"] = parImparScore;
+
+        let mixScore = 0;
+        const coldCount = comboArr.filter((n) => cold.has(n)).length;
+        const hotCount = comboArr.filter((n) => hot.has(n)).length;
+        const mediumCount = comboArr.filter((n) => medios.has(n)).length;
+        if (coldCount > 0 && hotCount > 0 && mediumCount > 0)
+          mixScore = strategyWeights.mix_frio_caliente;
+        score += mixScore;
+        breakdown["Mix Frío/Caliente/Medio"] = mixScore;
+
+        let pairScore = 0;
+        let pairHits = 0;
+        for (const pair of combinations(comboArr, 2)) {
+          if (analysis.topPairsSet.has(JSON.stringify(pair))) pairHits++;
+        }
+        pairScore = Math.min(pairHits * 5, strategyWeights.pares_frecuentes);
+        score += pairScore;
+        breakdown["Pares Frecuentes"] = pairScore;
+
+        const confidence = (score / maxScore) * 100;
+        return { confidence, breakdown };
+      }
+
+      // --- FUNCIONES DE UTILIDAD ---
+      function showNotification(message) {
+        document.getElementById("notification-message").innerText = message;
+        document
+          .getElementById("notification-modal")
+          .classList.remove("hidden");
+      }
+      function combinations(arr, k) {
+        let result = [];
+        function backtrack(start, currentCombo) {
+          if (currentCombo.length === k) {
+            result.push([...currentCombo]);
+            return;
+          }
+          for (let i = start; i < arr.length; i++) {
+            currentCombo.push(arr[i]);
+            backtrack(i + 1, currentCombo);
+            currentCombo.pop();
+          }
+        }
+        backtrack(0, []);
+        return result;
+      }
+      function percentile(arr, p) {
+        if (arr.length === 0) return 0;
+        const sorted = [...arr].sort((a, b) => a - b);
+        const pos = (sorted.length - 1) * (p / 100);
+        const base = Math.floor(pos);
+        const rest = pos - base;
+        if (sorted[base + 1] !== undefined) {
+          return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+        } else {
+          return sorted[base];
+        }
+      }
+      function sample(arr, k) {
+        const shuffled = [...arr].sort(() => 0.5 - Math.random());
+        return new Set(shuffled.slice(0, k));
+      }
+      function sum(arr) {
+        return arr.reduce((a, b) => a + b, 0);
+      }
     </script>
-</body>
+  </body>
 </html>
