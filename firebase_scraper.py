@@ -64,7 +64,7 @@ def main():
     try:
         print(f"Obteniendo datos desde: {URL_DE_RESULTADOS}...")
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-        respuesta = requests.get(URL_DE_RESULTADOS, headers=headers, timeout=20)
+        respuesta = requests.get(URL_DE_RESULTADOS, headers=headers, timeout=20,  verify=False)
         respuesta.raise_for_status()
 
         sopa = BeautifulSoup(respuesta.content, 'html.parser')
