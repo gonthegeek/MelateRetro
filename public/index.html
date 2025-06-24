@@ -391,6 +391,7 @@
       let strategyWeights = {};
       let lastAnalyzedDrawNumber = 0;
 
+      // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
       window.addEventListener("DOMContentLoaded", () => {
         document
           .getElementById("login-form")
@@ -458,18 +459,18 @@
             ...doc.data(),
           }));
 
+          const defaultWeights = {
+            suma_rango: 25,
+            dist_par_impar: 20,
+            mix_frio_caliente: 15,
+            pares_frecuentes: 15,
+            atraso_mix: 15,
+            decenas_distribucion: 10,
+          };
           if (weightsDoc.exists()) {
-            strategyWeights = weightsDoc.data();
+            strategyWeights = { ...defaultWeights, ...weightsDoc.data() }; // Asegurar que todas las claves existen
           } else {
-            // Añadir pesos por defecto para las nuevas reglas
-            strategyWeights = {
-              suma_rango: 25,
-              dist_par_impar: 20,
-              mix_frio_caliente: 15,
-              pares_frecuentes: 15,
-              atraso_mix: 15,
-              decenas_distribucion: 10,
-            };
+            strategyWeights = defaultWeights;
             await setDoc(configDocRef, strategyWeights);
           }
 
@@ -608,7 +609,6 @@
           .map(([num, freq]) => ({ number: parseInt(num), frequency: freq }))
           .sort((a, b) => b.frequency - a.frequency);
         const lastDrawNumber = Math.max(...fullHistory.map((d) => d.sorteo));
-
         analysis.lags = Array.from({ length: 39 }, (_, i) => {
           const num = i + 1;
           const lastSeenDraw = fullHistory.find((d) =>
@@ -621,7 +621,6 @@
               : fullHistory.length,
           };
         }).sort((a, b) => b.lag - a.lag);
-
         const lagThird = Math.floor(analysis.lags.length / 3);
         analysis.highLag = new Set(
           analysis.lags.slice(0, lagThird).map((l) => l.number)
@@ -629,7 +628,6 @@
         analysis.lowLag = new Set(
           analysis.lags.slice(-lagThird).map((l) => l.number)
         );
-
         const allPairs = fullHistory.flatMap((d) => {
           const numbers = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].sort(
             (a, b) => a - b
@@ -648,7 +646,6 @@
         analysis.topPairsSet = new Set(
           analysis.topPairs.slice(0, 20).map((p) => JSON.stringify(p.pair))
         );
-
         const oddEvenCounts = fullHistory
           .map((d) => {
             const evens = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].filter(
@@ -666,10 +663,9 @@
         analysis.topOddEven = analysis.oddEvenDistribution
           .slice(0, 3)
           .map(([dist]) => dist);
-
         const tensDistribution = fullHistory
           .map((d) => {
-            const tens = [0, 0, 0, 0]; // 1-9, 10-19, 20-29, 30-39
+            const tens = [0, 0, 0, 0];
             [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].forEach((n) => {
               if (n < 10) tens[0]++;
               else if (n < 20) tens[1]++;
@@ -688,7 +684,6 @@
         analysis.topTensDistribution = analysis.tensDistribution
           .slice(0, 3)
           .map(([dist]) => dist);
-
         const sums = fullHistory.map(
           (d) => d.F1 + d.F2 + d.F3 + d.F4 + d.F5 + d.F6
         );
@@ -712,6 +707,7 @@
         const maxScore =
           Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
         let breakdown = {};
+
         const freqs = analysis.frequencies;
         const cold = new Set(freqs.slice(-13).map((f) => f.number));
         const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
@@ -727,15 +723,13 @@
         )
           sumaScore = strategyWeights.suma_rango;
         score += sumaScore;
-        breakdown["Regla de Suma"] = sumaScore;
-
+        breakdown["Suma en Rango"] = sumaScore;
         let parImparScore = 0;
         const evens = comboArr.filter((n) => n % 2 === 0).length;
         if (analysis.topOddEven.includes(`${evens}P-${6 - evens}I`))
           parImparScore = strategyWeights.dist_par_impar;
         score += parImparScore;
-        breakdown["Regla Par/Impar"] = parImparScore;
-
+        breakdown["Distribución Par/Impar"] = parImparScore;
         let mixScore = 0;
         const coldCount = comboArr.filter((n) => cold.has(n)).length;
         const hotCount = comboArr.filter((n) => hot.has(n)).length;
@@ -744,7 +738,6 @@
           mixScore = strategyWeights.mix_frio_caliente;
         score += mixScore;
         breakdown["Mix Frecuencia"] = mixScore;
-
         let lagMixScore = 0;
         const highLagCount = comboArr.filter((n) =>
           analysis.highLag.has(n)
@@ -756,7 +749,6 @@
           lagMixScore = strategyWeights.atraso_mix;
         score += lagMixScore;
         breakdown["Mix Atraso"] = lagMixScore;
-
         let tensScore = 0;
         const tens = [0, 0, 0, 0];
         comboArr.forEach((n) => {
@@ -770,7 +762,6 @@
           tensScore = strategyWeights.decenas_distribucion;
         score += tensScore;
         breakdown["Distribución Decenas"] = tensScore;
-
         let pairScore = 0;
         let pairHits = 0;
         for (const pair of combinations(comboArr, 2)) {
@@ -798,7 +789,6 @@
           );
           return;
         }
-
         const winningCombo = [
           lastDrawInDb.F1,
           lastDrawInDb.F2,
@@ -813,16 +803,19 @@
         const increaseFactor = 1.01;
         const decreaseFactor = 0.99;
         let changes = [];
-
         const { breakdown } = rateCombination(winningCombo);
 
+        const ruleToWeightMap = {
+          "Suma en Rango": "suma_rango",
+          "Distribución Par/Impar": "dist_par_impar",
+          "Mix Frecuencia": "mix_frio_caliente",
+          "Pares Frecuentes": "pares_frecuentes",
+          "Mix Atraso": "atraso_mix",
+          "Distribución Decenas": "decenas_distribucion",
+        };
+
         Object.entries(breakdown).forEach(([ruleKey, score]) => {
-          const weightKey = ruleKey
-            .toLowerCase()
-            .replace(/ /g, "_")
-            .replace("frío/caliente/medio", "frio_caliente")
-            .replace("par/impar", "par_impar")
-            .replace("distribución_decenas", "decenas_distribucion");
+          const weightKey = ruleToWeightMap[ruleKey];
           if (strategyWeights[weightKey]) {
             if (score > 0) {
               strategyWeights[weightKey] *= increaseFactor;
