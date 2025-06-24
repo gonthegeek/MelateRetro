@@ -273,10 +273,20 @@
             </div>
             <div class="stat-card p-4 rounded-lg">
               <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-balance-scale mr-2 text-orange-500"></i>Pesos
-                de Estrategia
+                <i class="fas fa-layer-group mr-2 text-purple-500"></i
+                >Distribución de Decenas
               </h3>
-              <div id="strategy-weights"></div>
+              <div id="tens-analysis"></div>
+            </div>
+            <div class="stat-card p-4 rounded-lg lg:col-span-3">
+              <h3 class="text-xl font-semibold mb-3">
+                <i class="fas fa-balance-scale mr-2 text-orange-500"></i>Pesos
+                de Estrategia Inteligente
+              </h3>
+              <div
+                id="strategy-weights"
+                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+              ></div>
             </div>
           </div>
         </div>
@@ -381,7 +391,6 @@
       let strategyWeights = {};
       let lastAnalyzedDrawNumber = 0;
 
-      // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
       window.addEventListener("DOMContentLoaded", () => {
         document
           .getElementById("login-form")
@@ -452,11 +461,14 @@
           if (weightsDoc.exists()) {
             strategyWeights = weightsDoc.data();
           } else {
+            // Añadir pesos por defecto para las nuevas reglas
             strategyWeights = {
-              suma_rango: 30,
-              dist_par_impar: 25,
-              mix_frio_caliente: 25,
-              pares_frecuentes: 20,
+              suma_rango: 25,
+              dist_par_impar: 20,
+              mix_frio_caliente: 15,
+              pares_frecuentes: 15,
+              atraso_mix: 15,
+              decenas_distribucion: 10,
             };
             await setDoc(configDocRef, strategyWeights);
           }
@@ -596,6 +608,7 @@
           .map(([num, freq]) => ({ number: parseInt(num), frequency: freq }))
           .sort((a, b) => b.frequency - a.frequency);
         const lastDrawNumber = Math.max(...fullHistory.map((d) => d.sorteo));
+
         analysis.lags = Array.from({ length: 39 }, (_, i) => {
           const num = i + 1;
           const lastSeenDraw = fullHistory.find((d) =>
@@ -608,6 +621,15 @@
               : fullHistory.length,
           };
         }).sort((a, b) => b.lag - a.lag);
+
+        const lagThird = Math.floor(analysis.lags.length / 3);
+        analysis.highLag = new Set(
+          analysis.lags.slice(0, lagThird).map((l) => l.number)
+        );
+        analysis.lowLag = new Set(
+          analysis.lags.slice(-lagThird).map((l) => l.number)
+        );
+
         const allPairs = fullHistory.flatMap((d) => {
           const numbers = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].sort(
             (a, b) => a - b
@@ -626,6 +648,7 @@
         analysis.topPairsSet = new Set(
           analysis.topPairs.slice(0, 20).map((p) => JSON.stringify(p.pair))
         );
+
         const oddEvenCounts = fullHistory
           .map((d) => {
             const evens = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].filter(
@@ -643,6 +666,29 @@
         analysis.topOddEven = analysis.oddEvenDistribution
           .slice(0, 3)
           .map(([dist]) => dist);
+
+        const tensDistribution = fullHistory
+          .map((d) => {
+            const tens = [0, 0, 0, 0]; // 1-9, 10-19, 20-29, 30-39
+            [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].forEach((n) => {
+              if (n < 10) tens[0]++;
+              else if (n < 20) tens[1]++;
+              else if (n < 30) tens[2]++;
+              else tens[3]++;
+            });
+            return tens.sort((a, b) => b - a).join("-");
+          })
+          .reduce((acc, dist) => {
+            acc[dist] = (acc[dist] || 0) + 1;
+            return acc;
+          }, {});
+        analysis.tensDistribution = Object.entries(tensDistribution).sort(
+          ([, a], [, b]) => b - a
+        );
+        analysis.topTensDistribution = analysis.tensDistribution
+          .slice(0, 3)
+          .map(([dist]) => dist);
+
         const sums = fullHistory.map(
           (d) => d.F1 + d.F2 + d.F3 + d.F4 + d.F5 + d.F6
         );
@@ -660,12 +706,149 @@
           q75: percentile(sums, 75),
         };
       }
-      function generateIntelligentCombinations(quantity) {
-        const candidates = {};
-        const maxAttempts = Math.max(5000, quantity * 500);
+
+      function rateCombination(comboArr) {
+        let score = 0;
+        const maxScore =
+          Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
+        let breakdown = {};
         const freqs = analysis.frequencies;
         const cold = new Set(freqs.slice(-13).map((f) => f.number));
         const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
+        const medios = new Set(
+          analysis.frequencies.slice(13, 26).map((f) => f.number)
+        );
+        const comboSet = new Set(comboArr);
+
+        let sumaScore = 0;
+        if (
+          sum(comboArr) >= analysis.sumAnalysis.q25 &&
+          sum(comboArr) <= analysis.sumAnalysis.q75
+        )
+          sumaScore = strategyWeights.suma_rango;
+        score += sumaScore;
+        breakdown["Regla de Suma"] = sumaScore;
+
+        let parImparScore = 0;
+        const evens = comboArr.filter((n) => n % 2 === 0).length;
+        if (analysis.topOddEven.includes(`${evens}P-${6 - evens}I`))
+          parImparScore = strategyWeights.dist_par_impar;
+        score += parImparScore;
+        breakdown["Regla Par/Impar"] = parImparScore;
+
+        let mixScore = 0;
+        const coldCount = comboArr.filter((n) => cold.has(n)).length;
+        const hotCount = comboArr.filter((n) => hot.has(n)).length;
+        const mediumCount = comboArr.filter((n) => medios.has(n)).length;
+        if (coldCount > 0 && hotCount > 0 && mediumCount > 0)
+          mixScore = strategyWeights.mix_frio_caliente;
+        score += mixScore;
+        breakdown["Mix Frecuencia"] = mixScore;
+
+        let lagMixScore = 0;
+        const highLagCount = comboArr.filter((n) =>
+          analysis.highLag.has(n)
+        ).length;
+        const lowLagCount = comboArr.filter((n) =>
+          analysis.lowLag.has(n)
+        ).length;
+        if (highLagCount > 0 && lowLagCount > 0)
+          lagMixScore = strategyWeights.atraso_mix;
+        score += lagMixScore;
+        breakdown["Mix Atraso"] = lagMixScore;
+
+        let tensScore = 0;
+        const tens = [0, 0, 0, 0];
+        comboArr.forEach((n) => {
+          if (n < 10) tens[0]++;
+          else if (n < 20) tens[1]++;
+          else if (n < 30) tens[2]++;
+          else tens[3]++;
+        });
+        const tensDistStr = tens.sort((a, b) => b - a).join("-");
+        if (analysis.topTensDistribution.includes(tensDistStr))
+          tensScore = strategyWeights.decenas_distribucion;
+        score += tensScore;
+        breakdown["Distribución Decenas"] = tensScore;
+
+        let pairScore = 0;
+        let pairHits = 0;
+        for (const pair of combinations(comboArr, 2)) {
+          if (analysis.topPairsSet.has(JSON.stringify(pair))) pairHits++;
+        }
+        pairScore = Math.min(pairHits * 5, strategyWeights.pares_frecuentes);
+        score += pairScore;
+        breakdown["Pares Frecuentes"] = pairScore;
+
+        const confidence = (score / maxScore) * 100;
+        return { confidence, breakdown };
+      }
+
+      async function adjustStrategy() {
+        if (fullHistory.length < 2) {
+          showNotification(
+            "No hay suficientes datos para ajustar la estrategia."
+          );
+          return;
+        }
+        const lastDrawInDb = fullHistory[0];
+        if (lastDrawInDb.sorteo <= lastAnalyzedDrawNumber) {
+          showNotification(
+            `La estrategia ya fue ajustada con el sorteo ${lastDrawInDb.sorteo}. Espera un nuevo resultado.`
+          );
+          return;
+        }
+
+        const winningCombo = [
+          lastDrawInDb.F1,
+          lastDrawInDb.F2,
+          lastDrawInDb.F3,
+          lastDrawInDb.F4,
+          lastDrawInDb.F5,
+          lastDrawInDb.F6,
+        ].sort((a, b) => a - b);
+        showNotification(
+          `Analizando sorteo ${lastDrawInDb.sorteo} para mejorar estrategia...`
+        );
+        const increaseFactor = 1.01;
+        const decreaseFactor = 0.99;
+        let changes = [];
+
+        const { breakdown } = rateCombination(winningCombo);
+
+        Object.entries(breakdown).forEach(([ruleKey, score]) => {
+          const weightKey = ruleKey
+            .toLowerCase()
+            .replace(/ /g, "_")
+            .replace("frío/caliente/medio", "frio_caliente")
+            .replace("par/impar", "par_impar")
+            .replace("distribución_decenas", "decenas_distribucion");
+          if (strategyWeights[weightKey]) {
+            if (score > 0) {
+              strategyWeights[weightKey] *= increaseFactor;
+              changes.push(`${ruleKey}: Peso aumentado.`);
+            } else {
+              strategyWeights[weightKey] *= decreaseFactor;
+              changes.push(`${ruleKey}: Peso reducido.`);
+            }
+          }
+        });
+
+        try {
+          await setDoc(configDocRef, strategyWeights);
+          await setDoc(lastAnalyzedDocRef, { sorteo: lastDrawInDb.sorteo });
+          lastAnalyzedDrawNumber = lastDrawInDb.sorteo;
+          showNotification("¡Estrategia mejorada!\n" + changes.join("\n"));
+          displayStrategyWeights();
+        } catch (e) {
+          console.error("Error al guardar la mejora: ", e);
+          showNotification("Error al guardar la mejora de la estrategia.");
+        }
+      }
+
+      function generateIntelligentCombinations(quantity) {
+        const candidates = {};
+        const maxAttempts = Math.max(5000, quantity * 500);
         const maxScore =
           Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
         for (let i = 0; i < maxAttempts; i++) {
@@ -676,43 +859,22 @@
           const comboArr = Array.from(combo).sort((a, b) => a - b);
           const comboKey = JSON.stringify(comboArr);
           if (candidates[comboKey]) continue;
-          let score = 0;
-          const comboSum = comboArr.reduce((a, b) => a + b, 0);
-          if (
-            comboSum >= analysis.sumAnalysis.q25 &&
-            comboSum <= analysis.sumAnalysis.q75
-          ) {
-            score += strategyWeights.suma_rango;
-          }
-          const evens = comboArr.filter((n) => n % 2 === 0).length;
-          const distStr = `${evens}P-${6 - evens}I`;
-          if (analysis.topOddEven.includes(distStr)) {
-            score += strategyWeights.dist_par_impar;
-          }
-          const coldCount = comboArr.filter((n) => cold.has(n)).length;
-          const hotCount = comboArr.filter((n) => hot.has(n)).length;
-          if (coldCount > 0 && hotCount > 0 && 6 - coldCount - hotCount > 0) {
-            score += strategyWeights.mix_frio_caliente;
-          }
-          let pairHits = 0;
-          for (const pair of combinations(comboArr, 2)) {
-            if (analysis.topPairsSet.has(JSON.stringify(pair))) pairHits++;
-          }
-          score += Math.min(pairHits * 5, strategyWeights.pares_frecuentes);
-          candidates[comboKey] = score;
+          const { confidence } = rateCombination(comboArr);
+          candidates[comboKey] = confidence;
         }
         const sortedCandidates = Object.entries(candidates).sort(
           ([, a], [, b]) => b - a
         );
-        return sortedCandidates.slice(0, quantity).map(([comboStr, score]) => {
-          const confidence = (score / maxScore) * 100;
-          let label = `Confianza: ${confidence.toFixed(0)}% (Baja)`;
-          if (confidence >= 80)
-            label = `Confianza: ${confidence.toFixed(0)}% (Alta)`;
-          else if (confidence >= 60)
-            label = `Confianza: ${confidence.toFixed(0)}% (Media)`;
-          return { combination: JSON.parse(comboStr), confidence: label };
-        });
+        return sortedCandidates
+          .slice(0, quantity)
+          .map(([comboStr, confidence]) => {
+            let label = `Confianza: ${confidence.toFixed(0)}% (Baja)`;
+            if (confidence >= 80)
+              label = `Confianza: ${confidence.toFixed(0)}% (Alta)`;
+            else if (confidence >= 60)
+              label = `Confianza: ${confidence.toFixed(0)}% (Media)`;
+            return { combination: JSON.parse(comboStr), confidence: label };
+          });
       }
       function generateSimpleCombinations(quantity, strategy) {
         const combinationsSet = new Set();
@@ -762,66 +924,6 @@
           combination: JSON.parse(c),
           confidence: "(Estrategia Simple)",
         }));
-      }
-
-      async function adjustStrategy() {
-        if (fullHistory.length < 2) {
-          showNotification(
-            "No hay suficientes datos para ajustar la estrategia."
-          );
-          return;
-        }
-        const lastDrawInDb = fullHistory[0];
-        if (lastDrawInDb.sorteo <= lastAnalyzedDrawNumber) {
-          showNotification(
-            `La estrategia ya fue ajustada con el sorteo ${lastDrawInDb.sorteo}. Espera un nuevo resultado.`
-          );
-          return;
-        }
-        const winningCombo = [
-          lastDrawInDb.F1,
-          lastDrawInDb.F2,
-          lastDrawInDb.F3,
-          lastDrawInDb.F4,
-          lastDrawInDb.F5,
-          lastDrawInDb.F6,
-        ].sort((a, b) => a - b);
-        showNotification(
-          `Analizando sorteo ${lastDrawInDb.sorteo} para mejorar estrategia...`
-        );
-        const increaseFactor = 1.01;
-        const decreaseFactor = 0.99;
-        let changes = [];
-        const winSum = winningCombo.reduce((a, b) => a + b, 0);
-        if (
-          winSum >= analysis.sumAnalysis.q25 &&
-          winSum <= analysis.sumAnalysis.q75
-        ) {
-          strategyWeights.suma_rango *= increaseFactor;
-          changes.push("Suma en rango: Peso aumentado.");
-        } else {
-          strategyWeights.suma_rango *= decreaseFactor;
-          changes.push("Suma fuera de rango: Peso reducido.");
-        }
-        const evens = winningCombo.filter((n) => n % 2 === 0).length;
-        const distStr = `${evens}P-${6 - evens}I`;
-        if (analysis.topOddEven.includes(distStr)) {
-          strategyWeights.dist_par_impar *= increaseFactor;
-          changes.push(`Distribución ${distStr} es común: Peso aumentado.`);
-        } else {
-          strategyWeights.dist_par_impar *= decreaseFactor;
-          changes.push(`Distribución ${distStr} no es común: Peso reducido.`);
-        }
-        try {
-          await setDoc(configDocRef, strategyWeights);
-          await setDoc(lastAnalyzedDocRef, { sorteo: lastDrawInDb.sorteo });
-          lastAnalyzedDrawNumber = lastDrawInDb.sorteo;
-          showNotification("¡Estrategia mejorada!\n" + changes.join("\n"));
-          displayStrategyWeights();
-        } catch (e) {
-          console.error("Error al guardar la mejora: ", e);
-          showNotification("Error al guardar la mejora de la estrategia.");
-        }
       }
 
       // --- RENDERIZADO DE UI ---
@@ -881,7 +983,6 @@
         const viewToShow = document.getElementById(viewIdToShow);
         if (viewToShow) viewToShow.classList.remove("hidden");
       }
-
       function displayLatestResult() {
         if (fullHistory.length === 0) {
           document.getElementById("latest-draw-card").classList.add("hidden");
@@ -972,6 +1073,14 @@
                 `<div class="flex justify-between items-center text-sm mb-1"><span><b>${dist}</b>:</span> <span class="font-semibold">${count} veces</span></div>`
             )
             .join("");
+        document.getElementById("tens-analysis").innerHTML =
+          analysis.tensDistribution
+            .slice(0, 3)
+            .map(
+              ([dist, count]) =>
+                `<div class="flex justify-between items-center text-sm mb-1"><span><b>${dist}</b>:</span> <span class="font-semibold">${count} veces</span></div>`
+            )
+            .join("");
         displayStrategyWeights();
       }
       function displayStrategyWeights() {
@@ -980,13 +1089,13 @@
         )
           .map(
             ([key, val]) =>
-              `<div class="flex justify-between items-center text-sm mb-1"><span>${key
+              `<div class="p-2 bg-gray-700 rounded-md text-center"><div class="text-xs text-gray-400">${key
                 .replace(/_/g, " ")
                 .replace(/\b\w/g, (l) =>
                   l.toUpperCase()
-                )}:</span><span class="font-semibold">${val.toFixed(
+                )}</div><div class="font-bold text-lg">${val.toFixed(
                 2
-              )}</span></div>`
+              )}</div></div>`
           )
           .join("");
       }
@@ -1139,51 +1248,6 @@
         )}]</h3> <div class="space-y-2 p-4 bg-gray-800 rounded-md"> ${breakdownHTML} <div class="border-t border-gray-600 mt-3 pt-3 flex justify-between font-bold text-lg text-indigo-400"> <span>Confianza Final:</span> <span>${confidence.toFixed(
           0
         )}%</span> </div> </div>`;
-      }
-      function rateCombination(comboArr) {
-        let score = 0;
-        const maxScore =
-          Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
-        let breakdown = {};
-        const freqs = analysis.frequencies;
-        const cold = new Set(freqs.slice(-13).map((f) => f.number));
-        const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
-        const medios = new Set(
-          analysis.frequencies.slice(13, 26).map((f) => f.number)
-        );
-        const comboSet = new Set(comboArr);
-        let sumaScore = 0;
-        if (
-          sum(comboArr) >= analysis.sumAnalysis.q25 &&
-          sum(comboArr) <= analysis.sumAnalysis.q75
-        )
-          sumaScore = strategyWeights.suma_rango;
-        score += sumaScore;
-        breakdown["Regla de Suma"] = sumaScore;
-        let parImparScore = 0;
-        const evens = comboArr.filter((n) => n % 2 === 0).length;
-        if (analysis.topOddEven.includes(`${evens}P-${6 - evens}I`))
-          parImparScore = strategyWeights.dist_par_impar;
-        score += parImparScore;
-        breakdown["Regla Par/Impar"] = parImparScore;
-        let mixScore = 0;
-        const coldCount = comboArr.filter((n) => cold.has(n)).length;
-        const hotCount = comboArr.filter((n) => hot.has(n)).length;
-        const mediumCount = comboArr.filter((n) => medios.has(n)).length;
-        if (coldCount > 0 && hotCount > 0 && mediumCount > 0)
-          mixScore = strategyWeights.mix_frio_caliente;
-        score += mixScore;
-        breakdown["Mix Frío/Caliente/Medio"] = mixScore;
-        let pairScore = 0;
-        let pairHits = 0;
-        for (const pair of combinations(comboArr, 2)) {
-          if (analysis.topPairsSet.has(JSON.stringify(pair))) pairHits++;
-        }
-        pairScore = Math.min(pairHits * 5, strategyWeights.pares_frecuentes);
-        score += pairScore;
-        breakdown["Pares Frecuentes"] = pairScore;
-        const confidence = (score / maxScore) * 100;
-        return { confidence, breakdown };
       }
       async function displayReviewer() {
         const container = document.getElementById("interactive-container");
