@@ -391,7 +391,6 @@
       let strategyWeights = {};
       let lastAnalyzedDrawNumber = 0;
 
-      // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
       window.addEventListener("DOMContentLoaded", () => {
         document
           .getElementById("login-form")
@@ -462,13 +461,13 @@
           const defaultWeights = {
             suma_rango: 25,
             dist_par_impar: 20,
-            mix_frio_caliente: 15,
+            mix_frecuencia: 15,
             pares_frecuentes: 15,
-            atraso_mix: 15,
+            mix_atraso: 15,
             decenas_distribucion: 10,
           };
           if (weightsDoc.exists()) {
-            strategyWeights = { ...defaultWeights, ...weightsDoc.data() }; // Asegurar que todas las claves existen
+            strategyWeights = { ...defaultWeights, ...weightsDoc.data() };
           } else {
             strategyWeights = defaultWeights;
             await setDoc(configDocRef, strategyWeights);
@@ -693,8 +692,8 @@
             sums.length
         );
         analysis.sumAnalysis = {
-          mean: sumMean.toFixed(2),
-          std: sumStdDev.toFixed(2),
+          mean: sumMean,
+          std: sumStdDev,
           min: Math.min(...sums),
           max: Math.max(...sums),
           q25: percentile(sums, 25),
@@ -707,37 +706,50 @@
         const maxScore =
           Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
         let breakdown = {};
+        const comboSet = new Set(comboArr);
 
         const freqs = analysis.frequencies;
         const cold = new Set(freqs.slice(-13).map((f) => f.number));
         const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
-        const medios = new Set(
-          analysis.frequencies.slice(13, 26).map((f) => f.number)
-        );
-        const comboSet = new Set(comboArr);
 
         let sumaScore = 0;
-        if (
-          sum(comboArr) >= analysis.sumAnalysis.q25 &&
-          sum(comboArr) <= analysis.sumAnalysis.q75
-        )
+        const comboSum = sum(comboArr);
+        const mean = analysis.sumAnalysis.mean;
+        const std = analysis.sumAnalysis.std;
+        if (Math.abs(comboSum - mean) < 0.75 * std) {
           sumaScore = strategyWeights.suma_rango;
+        } else if (Math.abs(comboSum - mean) < 1.5 * std) {
+          sumaScore = strategyWeights.suma_rango / 2;
+        }
         score += sumaScore;
         breakdown["Suma en Rango"] = sumaScore;
+
         let parImparScore = 0;
         const evens = comboArr.filter((n) => n % 2 === 0).length;
-        if (analysis.topOddEven.includes(`${evens}P-${6 - evens}I`))
+        const distStr = `${evens}P-${6 - evens}I`;
+        const distIndex = analysis.topOddEven.indexOf(distStr);
+        if (distIndex === 0) {
           parImparScore = strategyWeights.dist_par_impar;
+        } else if (distIndex > 0) {
+          parImparScore = strategyWeights.dist_par_impar * 0.5;
+        }
         score += parImparScore;
         breakdown["Distribución Par/Impar"] = parImparScore;
-        let mixScore = 0;
+
+        let mixFrecuenciaScore = 0;
         const coldCount = comboArr.filter((n) => cold.has(n)).length;
         const hotCount = comboArr.filter((n) => hot.has(n)).length;
-        const mediumCount = comboArr.filter((n) => medios.has(n)).length;
-        if (coldCount > 0 && hotCount > 0 && mediumCount > 0)
-          mixScore = strategyWeights.mix_frio_caliente;
-        score += mixScore;
-        breakdown["Mix Frecuencia"] = mixScore;
+        const mediumCount = 6 - coldCount - hotCount;
+        const frecBalanceScore =
+          1 -
+          (Math.abs(coldCount - 2) +
+            Math.abs(hotCount - 2) +
+            Math.abs(mediumCount - 2)) /
+            8;
+        mixFrecuenciaScore = frecBalanceScore * strategyWeights.mix_frecuencia;
+        score += mixFrecuenciaScore;
+        breakdown["Mix Frecuencia"] = mixFrecuenciaScore;
+
         let lagMixScore = 0;
         const highLagCount = comboArr.filter((n) =>
           analysis.highLag.has(n)
@@ -745,10 +757,11 @@
         const lowLagCount = comboArr.filter((n) =>
           analysis.lowLag.has(n)
         ).length;
-        if (highLagCount > 0 && lowLagCount > 0)
+        if (highLagCount >= 1 && lowLagCount >= 1)
           lagMixScore = strategyWeights.atraso_mix;
         score += lagMixScore;
         breakdown["Mix Atraso"] = lagMixScore;
+
         let tensScore = 0;
         const tens = [0, 0, 0, 0];
         comboArr.forEach((n) => {
@@ -758,16 +771,21 @@
           else tens[3]++;
         });
         const tensDistStr = tens.sort((a, b) => b - a).join("-");
-        if (analysis.topTensDistribution.includes(tensDistStr))
+        const tensIndex = analysis.topTensDistribution.indexOf(tensDistStr);
+        if (tensIndex === 0) {
           tensScore = strategyWeights.decenas_distribucion;
+        } else if (tensIndex > 0) {
+          tensScore = strategyWeights.decenas_distribucion * 0.5;
+        }
         score += tensScore;
         breakdown["Distribución Decenas"] = tensScore;
+
         let pairScore = 0;
         let pairHits = 0;
         for (const pair of combinations(comboArr, 2)) {
           if (analysis.topPairsSet.has(JSON.stringify(pair))) pairHits++;
         }
-        pairScore = Math.min(pairHits * 5, strategyWeights.pares_frecuentes);
+        pairScore = (pairHits / 6) * strategyWeights.pares_frecuentes;
         score += pairScore;
         breakdown["Pares Frecuentes"] = pairScore;
 
@@ -804,19 +822,17 @@
         const decreaseFactor = 0.99;
         let changes = [];
         const { breakdown } = rateCombination(winningCombo);
-
         const ruleToWeightMap = {
           "Suma en Rango": "suma_rango",
           "Distribución Par/Impar": "dist_par_impar",
-          "Mix Frecuencia": "mix_frio_caliente",
+          "Mix Frecuencia": "mix_frecuencia",
           "Pares Frecuentes": "pares_frecuentes",
           "Mix Atraso": "atraso_mix",
           "Distribución Decenas": "decenas_distribucion",
         };
-
         Object.entries(breakdown).forEach(([ruleKey, score]) => {
           const weightKey = ruleToWeightMap[ruleKey];
-          if (strategyWeights[weightKey]) {
+          if (strategyWeights[weightKey] && score !== undefined) {
             if (score > 0) {
               strategyWeights[weightKey] *= increaseFactor;
               changes.push(`${ruleKey}: Peso aumentado.`);
@@ -826,7 +842,6 @@
             }
           }
         });
-
         try {
           await setDoc(configDocRef, strategyWeights);
           await setDoc(lastAnalyzedDocRef, { sorteo: lastDrawInDb.sorteo });
@@ -838,12 +853,9 @@
           showNotification("Error al guardar la mejora de la estrategia.");
         }
       }
-
       function generateIntelligentCombinations(quantity) {
         const candidates = {};
         const maxAttempts = Math.max(5000, quantity * 500);
-        const maxScore =
-          Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
         for (let i = 0; i < maxAttempts; i++) {
           const combo = new Set();
           while (combo.size < 6) {
@@ -962,7 +974,6 @@
           .addEventListener("click", adjustStrategy);
         setupUploadListeners();
       }
-
       function switchView(viewIdToShow) {
         const mainViews = [
           "stats-dashboard",
