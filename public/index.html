@@ -16,6 +16,7 @@
     <style>
       body {
         font-family: "Inter", sans-serif;
+        -webkit-tap-highlight-color: transparent;
       }
       .stat-card {
         background-color: #1f2937;
@@ -42,8 +43,9 @@
         z-index: 1000;
       }
       .number-ball {
-        width: 2.5rem;
-        height: 2.5rem;
+        width: 2.25rem;
+        height: 2.25rem;
+        font-size: 0.875rem;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -51,6 +53,13 @@
         font-weight: bold;
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4),
           0 2px 3px rgba(0, 0, 0, 0.2);
+      }
+      @media (min-width: 640px) {
+        .number-ball {
+          width: 2.5rem;
+          height: 2.5rem;
+          font-size: 1rem;
+        }
       }
     </style>
   </head>
@@ -68,7 +77,7 @@
     <!-- Contenedor de Login -->
     <div
       id="login-container"
-      class="min-h-screen flex items-center justify-center"
+      class="min-h-screen flex items-center justify-center p-4"
     >
       <div class="bg-gray-800 p-8 rounded-lg shadow-2xl w-full max-w-md">
         <h2 class="text-3xl font-bold text-center text-white mb-6">
@@ -115,17 +124,19 @@
       id="app-container"
       class="hidden container mx-auto p-4 md:p-8 max-w-7xl"
     >
-      <header class="flex justify-between items-center mb-8">
-        <div class="text-left">
+      <header
+        class="flex flex-col sm:flex-row justify-between items-center mb-8"
+      >
+        <div class="text-center sm:text-left mb-4 sm:mb-0">
           <h1
-            class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500"
+            class="text-3xl sm:text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500"
           >
             Analizador Estadístico
           </h1>
           <p class="text-gray-400 mt-2">
             Bienvenido. Explora patrones y genera sugerencias.
           </p>
-          <div id="auth-status" class="mt-4 text-xs text-gray-500"></div>
+          <div id="auth-status" class="mt-2 text-xs text-gray-500"></div>
         </div>
         <button
           id="btn-logout"
@@ -150,54 +161,62 @@
         </div>
 
         <!-- Controles Principales -->
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-8">
           <button
             id="btn-show-stats"
-            class="bg-indigo-600 hover:bg-indigo-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
+            class="bg-indigo-600 hover:bg-indigo-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-chart-pie mr-2"></i>Estadísticas
+            <i class="fas fa-chart-pie sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Estadísticas</span>
           </button>
           <button
             id="btn-show-history"
-            class="bg-blue-600 hover:bg-blue-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
+            class="bg-blue-600 hover:bg-blue-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-history mr-2"></i>Histórico
+            <i class="fas fa-history sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Histórico</span>
           </button>
           <button
             id="btn-show-generator"
-            class="bg-purple-600 hover:bg-purple-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
+            class="bg-purple-600 hover:bg-purple-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-magic-wand-sparkles mr-2"></i>Generador
+            <i class="fas fa-magic-wand-sparkles sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Generador</span>
           </button>
           <button
             id="btn-show-rater"
-            class="bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
+            class="bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-star-half-alt mr-2"></i>Calificar
+            <i class="fas fa-star-half-alt sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Calificar</span>
           </button>
           <button
             id="btn-show-verifier"
-            class="bg-teal-600 hover:bg-teal-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
+            class="bg-teal-600 hover:bg-teal-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-tasks mr-2"></i>Verificador
+            <i class="fas fa-tasks sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Verificador</span>
           </button>
           <button
             id="btn-show-reviewer"
-            class="bg-pink-600 hover:bg-pink-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
+            class="bg-pink-600 hover:bg-pink-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-search-plus mr-2"></i>Revisar
+            <i class="fas fa-search-plus sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Revisar</span>
           </button>
           <button
             id="btn-adjust-strategy"
-            class="bg-amber-600 hover:bg-amber-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
+            class="bg-amber-600 hover:bg-amber-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-brain mr-2"></i>Mejorar
+            <i class="fas fa-brain sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Mejorar</span>
           </button>
           <button
             id="btn-upload-csv"
-            class="bg-green-600 hover:bg-green-700 p-3 rounded-lg shadow-lg flex items-center justify-center text-md font-semibold transition-transform transform hover:scale-105"
+            class="bg-green-600 hover:bg-green-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
-            <i class="fas fa-upload mr-2"></i>Cargar CSV
+            <i class="fas fa-upload sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Cargar CSV</span>
           </button>
         </div>
 
@@ -209,10 +228,9 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="stat-card p-4 rounded-lg">
               <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-fire mr-2 text-red-500"></i>Frecuencia de
-                Números
+                <i class="fas fa-fire mr-2 text-red-500"></i>Frecuencia
               </h3>
-              <div class="flex justify-between">
+              <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
                 <div>
                   <h4 class="font-bold text-red-400">🔥 Calientes</h4>
                   <div id="hot-numbers" class="flex flex-wrap gap-2 mt-2"></div>
@@ -363,6 +381,7 @@
       let strategyWeights = {};
       let lastAnalyzedDrawNumber = 0;
 
+      // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
       window.addEventListener("DOMContentLoaded", () => {
         document
           .getElementById("login-form")
@@ -884,7 +903,7 @@
           latest.sorteo
         }</span></p><p class="text-gray-400">Fecha: <span class="font-bold text-white">${
           latest.FECHA
-        }</span></p></div> <div class="flex space-x-2 mt-4 md:mt-0">${numbers
+        }</span></p></div> <div class="flex flex-wrap justify-center gap-2 mt-4 md:mt-0">${numbers
           .map(
             (n) =>
               `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`
@@ -988,8 +1007,8 @@
           results = generateIntelligentCombinations(quantity);
           if (results.length > 0) {
             const suggestionsToSave = results.map((r) => ({
-              ...r,
-              combinacion: JSON.stringify(r.combination), // CORRECCIÓN: Guardar como string
+              combinacion: JSON.stringify(r.combination),
+              confidence: r.confidence,
               sorteo_sugerido_para: fullHistory[0].sorteo + 1,
               fecha_generacion: new Date(),
             }));
@@ -998,10 +1017,15 @@
               const newDocRef = doc(suggestionsCollectionRef);
               batch.set(newDocRef, sug);
             });
-            await batch.commit();
-            showNotification(
-              "Sugerencias inteligentes guardadas para futura revisión."
-            );
+            try {
+              await batch.commit();
+              showNotification(
+                "Sugerencias inteligentes guardadas para futura revisión."
+              );
+            } catch (e) {
+              console.error("Error al guardar sugerencias:", e);
+              showNotification("Error al guardar las sugerencias.");
+            }
           }
         } else {
           results = generateSimpleCombinations(quantity, strategy);
@@ -1012,12 +1036,14 @@
           results
             .map(
               (res) =>
-                `<div class="flex items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex space-x-2">${res.combination
+                `<div class="flex flex-col sm:flex-row items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex flex-wrap justify-center gap-2">${res.combination
                   .map(
                     (n) =>
-                      `<span class="bg-gray-600 w-10 h-10 flex items-center justify-center font-bold rounded-full">${n}</span>`
+                      `<span class="number-ball bg-gray-600 text-white">${n}</span>`
                   )
-                  .join("")}</div><span class="text-sm text-gray-400">${
+                  .join(
+                    ""
+                  )}</div><span class="text-sm text-gray-400 mt-2 sm:mt-0">${
                   res.confidence
                 }</span></div>`
             )
@@ -1176,14 +1202,12 @@
             if (!suggestionsByDraw[key]) suggestionsByDraw[key] = [];
             suggestionsByDraw[key].push(data);
           });
-
           if (Object.keys(suggestionsByDraw).length === 0) {
             document.getElementById(
               "reviewer-content"
             ).innerHTML = `<p class="text-gray-400">No se encontraron sugerencias guardadas. Genera algunas con la "Estrategia Inteligente" primero.</p>`;
             return;
           }
-
           let optionsHTML = Object.keys(suggestionsByDraw)
             .sort((a, b) => b - a)
             .map(
@@ -1191,13 +1215,9 @@
                 `<option value="${drawNum}">Sorteo ${drawNum}</option>`
             )
             .join("");
-          document.getElementById("reviewer-content").innerHTML = `
-                    <div class="flex flex-col space-y-4">
-                        <label for="review-draw-select" class="block mb-2 font-semibold">Selecciona un sorteo para revisar:</label>
-                        <select id="review-draw-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600">${optionsHTML}</select>
-                        <div id="review-results-area" class="mt-6 space-y-4"></div>
-                    </div>`;
-
+          document.getElementById(
+            "reviewer-content"
+          ).innerHTML = ` <div class="flex flex-col space-y-4"> <label for="review-draw-select" class="block mb-2 font-semibold">Selecciona un sorteo para revisar:</label> <select id="review-draw-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600">${optionsHTML}</select> <div id="review-results-area" class="mt-6 space-y-4"></div> </div>`;
           const select = document.getElementById("review-draw-select");
           select.addEventListener("change", (e) =>
             handleReviewSelection(e.target.value, suggestionsByDraw)
@@ -1215,7 +1235,6 @@
         const suggestions = suggestionsByDraw[drawNumber];
         const winningDraw = fullHistory.find((d) => d.sorteo === drawNumber);
         const reviewArea = document.getElementById("review-results-area");
-
         if (!winningDraw) {
           reviewArea.innerHTML = `<p class="text-yellow-400">Aún no se ha cargado el resultado del sorteo ${drawNumber}.</p>`;
           return;
@@ -1228,98 +1247,62 @@
           winningDraw.F5,
           winningDraw.F6,
         ].sort((a, b) => a - b);
-
-        let html = `<h3 class="text-xl font-bold text-indigo-400">Resultado Real del Sorteo ${drawNumber}</h3><div class="flex space-x-2 my-2">${winningCombo
+        let html = `<h3 class="text-xl font-bold text-indigo-400">Resultado Real del Sorteo ${drawNumber}</h3><div class="flex flex-wrap justify-center sm:justify-start gap-2 my-2">${winningCombo
           .map(
             (n) =>
               `<span class="number-ball bg-green-600 text-white">${n}</span>`
           )
           .join("")}</div>`;
-
         suggestions.forEach((sug) => {
           let suggestedCombo;
           try {
-            // CORRECCIÓN: Manejar tanto strings como arrays.
             if (typeof sug.combinacion === "string") {
               suggestedCombo = JSON.parse(sug.combinacion);
             } else if (Array.isArray(sug.combinacion)) {
               suggestedCombo = sug.combinacion;
             } else {
-              console.error(
-                "Formato de combinación no reconocido:",
-                sug.combinacion
-              );
-              return; // Saltar esta sugerencia
+              return;
             }
           } catch (e) {
-            console.error(
-              "Error al parsear la combinación:",
-              sug.combinacion,
-              e
-            );
-            return; // Saltar esta sugerencia si el parseo falla
+            return;
           }
-
           const hits = suggestedCombo.filter((n) =>
             winningCombo.includes(n)
           ).length;
           const { breakdown: sugBreakdown } = rateCombination(suggestedCombo);
           const { breakdown: winBreakdown } = rateCombination(winningCombo);
-
-          html += `
-                    <div class="p-4 bg-gray-800 rounded-lg border border-gray-700">
-                        <div class="flex justify-between items-center">
-                            <div class="flex space-x-2">${suggestedCombo
-                              .map(
-                                (n) =>
-                                  `<span class="number-ball ${
-                                    winningCombo.includes(n)
-                                      ? "bg-green-500"
-                                      : "bg-gray-600"
-                                  } text-white">${n}</span>`
-                              )
-                              .join("")}</div>
-                            <div class="text-right">
-                                <p class="text-lg font-bold">${hits} de 6 aciertos</p>
-                                <p class="text-sm text-gray-400">${
-                                  sug.confidence
-                                }</p>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-4 border-t border-gray-600 text-xs grid grid-cols-2 gap-x-4">
-                            <div>
-                                <h4 class="font-semibold mb-1 text-gray-300">Análisis de la Sugerencia:</h4>
-                                ${Object.entries(sugBreakdown)
-                                  .map(
-                                    ([rule, score]) =>
-                                      `<p class="${
-                                        score > 0
-                                          ? "text-green-400"
-                                          : "text-red-400"
-                                      }">${rule}: ${
-                                        score > 0 ? "Acierto" : "Fallo"
-                                      }</p>`
-                                  )
-                                  .join("")}
-                            </div>
-                             <div>
-                                <h4 class="font-semibold mb-1 text-gray-300">Análisis del Ganador:</h4>
-                                ${Object.entries(winBreakdown)
-                                  .map(
-                                    ([rule, score]) =>
-                                      `<p class="${
-                                        score > 0
-                                          ? "text-green-400"
-                                          : "text-red-400"
-                                      }">${rule}: ${
-                                        score > 0 ? "Acierto" : "Fallo"
-                                      }</p>`
-                                  )
-                                  .join("")}
-                            </div>
-                        </div>
-                    </div>
-                `;
+          html += ` <div class="p-4 bg-gray-800 rounded-lg border border-gray-700"> <div class="flex flex-col sm:flex-row justify-between items-center"> <div class="flex flex-wrap justify-center gap-2">${suggestedCombo
+            .map(
+              (n) =>
+                `<span class="number-ball ${
+                  winningCombo.includes(n) ? "bg-green-500" : "bg-gray-600"
+                } text-white">${n}</span>`
+            )
+            .join(
+              ""
+            )}</div> <div class="text-center sm:text-right mt-3 sm:mt-0"> <p class="text-lg font-bold">${hits} de 6 aciertos</p> <p class="text-sm text-gray-400">${
+            sug.confidence
+          }</p> </div> </div> <div class="mt-4 pt-4 border-t border-gray-600 text-xs grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2"> <div> <h4 class="font-semibold mb-1 text-gray-300">Análisis de la Sugerencia:</h4> ${Object.entries(
+            sugBreakdown
+          )
+            .map(
+              ([rule, score]) =>
+                `<p class="${
+                  score > 0 ? "text-green-400" : "text-red-400"
+                }">${rule}: ${score > 0 ? "✔️ Acierto" : "❌ Fallo"}</p>`
+            )
+            .join(
+              ""
+            )} </div> <div class="mt-2 md:mt-0"> <h4 class="font-semibold mb-1 text-gray-300">Análisis del Ganador:</h4> ${Object.entries(
+            winBreakdown
+          )
+            .map(
+              ([rule, score]) =>
+                `<p class="${
+                  score > 0 ? "text-green-400" : "text-red-400"
+                }">${rule}: ${score > 0 ? "✔️ Acierto" : "❌ Fallo"}</p>`
+            )
+            .join("")} </div> </div> </div> `;
         });
         reviewArea.innerHTML = html;
       }
