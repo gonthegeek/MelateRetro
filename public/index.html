@@ -758,7 +758,7 @@
           analysis.lowLag.has(n)
         ).length;
         if (highLagCount >= 1 && lowLagCount >= 1)
-          lagMixScore = strategyWeights.atraso_mix;
+          lagMixScore = strategyWeights.mix_atraso;
         score += lagMixScore;
         breakdown["Mix Atraso"] = lagMixScore;
 
@@ -827,7 +827,7 @@
           "Distribución Par/Impar": "dist_par_impar",
           "Mix Frecuencia": "mix_frecuencia",
           "Pares Frecuentes": "pares_frecuentes",
-          "Mix Atraso": "atraso_mix",
+          "Mix Atraso": "mix_atraso",
           "Distribución Decenas": "decenas_distribucion",
         };
         Object.entries(breakdown).forEach(([ruleKey, score]) => {
