@@ -6,7 +6,7 @@
 # completo en un ÚNICO documento en Firestore. El objetivo es reducir drásticamente
 # las lecturas de la base de datos desde la aplicación web.
 #
-# Autor: Gemini (Google AI)
+# Autor: Gemini (Google AI) - Versión Corregida
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -48,7 +48,7 @@ def fetch_data(db):
 def perform_full_analysis():
     global analysis
     print("Realizando análisis estadístico completo...")
-    # Esta función es idéntica a la del brute_force_analyzer, pero ahora es centralizada
+    
     all_numbers = [num for draw in full_history for num in [draw[f'F{j}'] for j in range(1, 7)]]
     
     # Frecuencias
@@ -71,7 +71,20 @@ def perform_full_analysis():
     
     # Distribución de Decenas
     def get_tens_dist_str(combo):
-        tens = [0, 0, 0, 0]; [tens[n//10 if n<39 else 3] += 1 for n in combo]; return "-".join(map(str, sorted(tens, reverse=True)))
+        tens = [0, 0, 0, 0]
+        for n in combo:
+            # CORRECCIÓN: Se separó la lógica en un bucle for estándar
+            # El número 39 pertenece a la decena de los 30 (índice 3)
+            if n <= 9:
+                tens[0] += 1
+            elif n <= 19:
+                tens[1] += 1
+            elif n <= 29:
+                tens[2] += 1
+            else: # 30-39
+                tens[3] += 1
+        return "-".join(map(str, sorted(tens, reverse=True)))
+    
     tens_counts = Counter(get_tens_dist_str([d[f'F{j}'] for j in range(1, 7)]) for d in full_history)
     analysis['tensDistribution'] = sorted(tens_counts.items(), key=lambda x: x[1], reverse=True)
     
@@ -87,7 +100,6 @@ def perform_full_analysis():
         curr_draw_nums = {history_reversed[i+1][f'F{j}'] for j in range(1, 7)}
         for prev_num in prev_draw_nums:
             markov.setdefault(str(prev_num), Counter()).update(curr_draw_nums)
-    # Convertir contadores a dicts para que sea serializable a JSON/Firestore
     analysis['markovTransitions'] = {k: dict(v) for k, v in markov.items()}
 
     # Análisis de Consecutivos
@@ -106,6 +118,10 @@ def save_analysis(db):
     analysis_doc_ref = db.collection(f'artifacts/{APP_ID}/public/data/analysis').document('latest')
     
     try:
+        # Convertir sets a listas para que sean serializables
+        if 'top_pairs_set' in analysis:
+            analysis['top_pairs_set'] = [list(pair) for pair in analysis['top_pairs_set']]
+
         analysis_doc_ref.set(analysis)
         print("✅ ¡Éxito! El análisis ha sido guardado en 'analysis/latest'.")
     except Exception as e:
@@ -116,10 +132,14 @@ def save_analysis(db):
             batch = db.batch()
             for key, value in analysis.items():
                 doc_ref = analysis_doc_ref.collection('parts').document(key)
-                batch.set(doc_ref, {'data': json.dumps(value)})
+                # Asegurarse de que todos los valores sean serializables
+                try:
+                    serializable_value = json.loads(json.dumps(value, default=list))
+                    batch.set(doc_ref, {'data': serializable_value})
+                except TypeError:
+                    batch.set(doc_ref, {'data': str(value)}) # Como último recurso
             batch.commit()
             print("✅ Análisis guardado en partes.")
-
 
 def main():
     db = get_db_client()
@@ -132,4 +152,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
