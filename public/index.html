@@ -161,13 +161,20 @@
         </div>
 
         <!-- Controles Principales -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-8">
+        <div class="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-3 mb-8">
           <button
             id="btn-show-stats"
             class="bg-indigo-600 hover:bg-indigo-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-chart-pie sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Estadísticas</span>
+          </button>
+          <button
+            id="btn-show-predictions"
+            class="bg-violet-600 hover:bg-violet-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-lightbulb sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Predicciones</span>
           </button>
           <button
             id="btn-show-history"
@@ -212,6 +219,13 @@
             ><span class="text-center">Mejorar</span>
           </button>
           <button
+            id="btn-recalculate-weights"
+            class="bg-rose-600 hover:bg-rose-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-calculator sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Calcular Pesos</span>
+          </button>
+          <button
             id="btn-upload-csv"
             class="bg-green-600 hover:bg-green-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
@@ -220,82 +234,8 @@
           </button>
         </div>
 
-        <!-- Dashboard de Estadísticas -->
-        <div id="stats-dashboard" class="hidden">
-          <h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">
-            Dashboard de Estadísticas
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-fire mr-2 text-red-500"></i>Frecuencia
-              </h3>
-              <div class="flex flex-col sm:flex-row sm:justify-between gap-4">
-                <div>
-                  <h4 class="font-bold text-red-400">🔥 Calientes</h4>
-                  <div id="hot-numbers" class="flex flex-wrap gap-2 mt-2"></div>
-                </div>
-                <div>
-                  <h4 class="font-bold text-blue-400">❄️ Fríos</h4>
-                  <div
-                    id="cold-numbers"
-                    class="flex flex-wrap gap-2 mt-2"
-                  ></div>
-                </div>
-              </div>
-            </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-hourglass-half mr-2 text-yellow-500"></i>Atraso
-                de Números
-              </h3>
-              <div id="atraso-numbers"></div>
-            </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-link mr-2 text-green-500"></i>Pares Más
-                Frecuentes
-              </h3>
-              <div id="top-pairs"></div>
-            </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-calculator mr-2 text-cyan-500"></i>Análisis de
-                Sumas
-              </h3>
-              <div id="sum-analysis"></div>
-            </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-divide mr-2 text-pink-500"></i>Pares e Impares
-              </h3>
-              <div id="odd-even-analysis"></div>
-            </div>
-            <div class="stat-card p-4 rounded-lg">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-layer-group mr-2 text-purple-500"></i
-                >Distribución de Decenas
-              </h3>
-              <div id="tens-analysis"></div>
-            </div>
-            <div class="stat-card p-4 rounded-lg lg:col-span-3">
-              <h3 class="text-xl font-semibold mb-3">
-                <i class="fas fa-balance-scale mr-2 text-orange-500"></i>Pesos
-                de Estrategia Inteligente
-              </h3>
-              <div
-                id="strategy-weights"
-                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
-              ></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Contenedor del Histórico -->
-        <div id="history-container" class="hidden"></div>
-
-        <!-- Contenedor para Generador y Verificador -->
-        <div id="interactive-container" class="hidden mt-8"></div>
+        <!-- Contenedor ÚNICO para todas las vistas dinámicas -->
+        <div id="view-container"></div>
 
         <div
           id="upload-container"
@@ -330,6 +270,32 @@
         >
           Cerrar
         </button>
+      </div>
+    </div>
+
+    <!-- Modal para Confirmación -->
+    <div id="confirmation-modal" class="hidden modal-backdrop">
+      <div
+        class="bg-gray-800 p-6 rounded-lg shadow-2xl max-w-sm w-full text-center"
+      >
+        <h3 class="text-xl font-bold text-yellow-400 mb-4">
+          Confirmación Requerida
+        </h3>
+        <p id="confirmation-message" class="text-lg"></p>
+        <div class="mt-6 flex justify-around">
+          <button
+            id="btn-confirm-action"
+            class="bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-semibold"
+          >
+            Confirmar
+          </button>
+          <button
+            id="btn-cancel-action"
+            class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg font-semibold"
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
 
@@ -390,7 +356,17 @@
       let analysis = {};
       let strategyWeights = {};
       let lastAnalyzedDrawNumber = 0;
+      const defaultWeights = {
+        suma_rango: 20,
+        dist_par_impar: 15,
+        mix_frecuencia: 15,
+        pares_frecuentes: 10,
+        mix_atraso: 15,
+        decenas_distribucion: 10,
+        prediccion_markov: 15,
+      };
 
+      // --- INICIALIZACIÓN Y AUTENTICACIÓN ---
       window.addEventListener("DOMContentLoaded", () => {
         document
           .getElementById("login-form")
@@ -458,14 +434,6 @@
             ...doc.data(),
           }));
 
-          const defaultWeights = {
-            suma_rango: 25,
-            dist_par_impar: 20,
-            mix_frecuencia: 15,
-            pares_frecuentes: 15,
-            mix_atraso: 15,
-            decenas_distribucion: 10,
-          };
           if (weightsDoc.exists()) {
             strategyWeights = { ...defaultWeights, ...weightsDoc.data() };
           } else {
@@ -485,7 +453,7 @@
             displayLatestResult();
             document.getElementById("main-content").classList.remove("hidden");
             document.getElementById("upload-container").classList.add("hidden");
-            switchView("stats-dashboard");
+            switchView(buildStatsDashboardHTML());
             displayStats();
           } else {
             document
@@ -600,11 +568,12 @@
           draw.F5,
           draw.F6,
         ]);
-        const numberCounts = allNumbers.reduce((acc, num) => {
-          acc[num] = (acc[num] || 0) + 1;
-          return acc;
-        }, {});
-        analysis.frequencies = Object.entries(numberCounts)
+        analysis.frequencies = Object.entries(
+          allNumbers.reduce((acc, num) => {
+            acc[num] = (acc[num] || 0) + 1;
+            return acc;
+          }, {})
+        )
           .map(([num, freq]) => ({ number: parseInt(num), frequency: freq }))
           .sort((a, b) => b.frequency - a.frequency);
         const lastDrawNumber = Math.max(...fullHistory.map((d) => d.sorteo));
@@ -699,6 +668,34 @@
           q25: percentile(sums, 25),
           q75: percentile(sums, 75),
         };
+        analysis.markovTransitions = {};
+        for (let i = 1; i < fullHistory.length; i++) {
+          const previousDrawNumbers = new Set([
+            fullHistory[i].F1,
+            fullHistory[i].F2,
+            fullHistory[i].F3,
+            fullHistory[i].F4,
+            fullHistory[i].F5,
+            fullHistory[i].F6,
+          ]);
+          const currentDrawNumbers = new Set([
+            fullHistory[i - 1].F1,
+            fullHistory[i - 1].F2,
+            fullHistory[i - 1].F3,
+            fullHistory[i - 1].F4,
+            fullHistory[i - 1].F5,
+            fullHistory[i - 1].F6,
+          ]);
+          for (const prevNum of previousDrawNumbers) {
+            if (!analysis.markovTransitions[prevNum]) {
+              analysis.markovTransitions[prevNum] = {};
+            }
+            for (const currNum of currentDrawNumbers) {
+              analysis.markovTransitions[prevNum][currNum] =
+                (analysis.markovTransitions[prevNum][currNum] || 0) + 1;
+            }
+          }
+        }
       }
 
       function rateCombination(comboArr) {
@@ -707,11 +704,9 @@
           Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
         let breakdown = {};
         const comboSet = new Set(comboArr);
-
         const freqs = analysis.frequencies;
         const cold = new Set(freqs.slice(-13).map((f) => f.number));
         const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
-
         let sumaScore = 0;
         const comboSum = sum(comboArr);
         const mean = analysis.sumAnalysis.mean;
@@ -723,7 +718,6 @@
         }
         score += sumaScore;
         breakdown["Suma en Rango"] = sumaScore;
-
         let parImparScore = 0;
         const evens = comboArr.filter((n) => n % 2 === 0).length;
         const distStr = `${evens}P-${6 - evens}I`;
@@ -735,7 +729,6 @@
         }
         score += parImparScore;
         breakdown["Distribución Par/Impar"] = parImparScore;
-
         let mixFrecuenciaScore = 0;
         const coldCount = comboArr.filter((n) => cold.has(n)).length;
         const hotCount = comboArr.filter((n) => hot.has(n)).length;
@@ -749,7 +742,6 @@
         mixFrecuenciaScore = frecBalanceScore * strategyWeights.mix_frecuencia;
         score += mixFrecuenciaScore;
         breakdown["Mix Frecuencia"] = mixFrecuenciaScore;
-
         let lagMixScore = 0;
         const highLagCount = comboArr.filter((n) =>
           analysis.highLag.has(n)
@@ -761,7 +753,6 @@
           lagMixScore = strategyWeights.mix_atraso;
         score += lagMixScore;
         breakdown["Mix Atraso"] = lagMixScore;
-
         let tensScore = 0;
         const tens = [0, 0, 0, 0];
         comboArr.forEach((n) => {
@@ -779,7 +770,6 @@
         }
         score += tensScore;
         breakdown["Distribución Decenas"] = tensScore;
-
         let pairScore = 0;
         let pairHits = 0;
         for (const pair of combinations(comboArr, 2)) {
@@ -788,11 +778,36 @@
         pairScore = (pairHits / 6) * strategyWeights.pares_frecuentes;
         score += pairScore;
         breakdown["Pares Frecuentes"] = pairScore;
-
+        let markovScore = 0;
+        const lastDrawNumbers = [
+          fullHistory[0].F1,
+          fullHistory[0].F2,
+          fullHistory[0].F3,
+          fullHistory[0].F4,
+          fullHistory[0].F5,
+          fullHistory[0].F6,
+        ];
+        let predictedHits = 0;
+        for (const prevNum of lastDrawNumbers) {
+          if (analysis.markovTransitions[prevNum]) {
+            const topTransitions = Object.entries(
+              analysis.markovTransitions[prevNum]
+            )
+              .sort(([, a], [, b]) => b - a)
+              .slice(0, 5)
+              .map(([num]) => parseInt(num));
+            predictedHits += comboArr.filter((n) =>
+              topTransitions.includes(n)
+            ).length;
+          }
+        }
+        markovScore =
+          (predictedHits / (6 * 5)) * strategyWeights.prediccion_markov;
+        score += markovScore;
+        breakdown["Predicción Markov"] = markovScore;
         const confidence = (score / maxScore) * 100;
         return { confidence, breakdown };
       }
-
       async function adjustStrategy() {
         if (fullHistory.length < 2) {
           showNotification(
@@ -820,6 +835,7 @@
         );
         const increaseFactor = 1.01;
         const decreaseFactor = 0.99;
+        const decayRate = 0.05;
         let changes = [];
         const { breakdown } = rateCombination(winningCombo);
         const ruleToWeightMap = {
@@ -829,6 +845,7 @@
           "Pares Frecuentes": "pares_frecuentes",
           "Mix Atraso": "mix_atraso",
           "Distribución Decenas": "decenas_distribucion",
+          "Predicción Markov": "prediccion_markov",
         };
         Object.entries(breakdown).forEach(([ruleKey, score]) => {
           const weightKey = ruleToWeightMap[ruleKey];
@@ -842,6 +859,12 @@
             }
           }
         });
+        Object.keys(strategyWeights).forEach((key) => {
+          strategyWeights[key] =
+            strategyWeights[key] * (1 - decayRate) +
+            defaultWeights[key] * decayRate;
+        });
+        changes.push("Regularización aplicada para mantener balance.");
         try {
           await setDoc(configDocRef, strategyWeights);
           await setDoc(lastAnalyzedDocRef, { sorteo: lastDrawInDb.sorteo });
@@ -853,9 +876,25 @@
           showNotification("Error al guardar la mejora de la estrategia.");
         }
       }
-      function generateIntelligentCombinations(quantity) {
+      function generateIntelligentCombinations(
+        quantity,
+        minConfidence = 0,
+        numBalls = 6
+      ) {
+        if (numBalls > 6) {
+          const powerRanking = calculatePowerRanking();
+          const topNumbers = powerRanking
+            .slice(0, numBalls)
+            .map((item) => item.number);
+          return [
+            {
+              combination: topNumbers.sort((a, b) => a - b),
+              confidence: `Grupo de ${numBalls} con Mayor Potencial Estadístico`,
+            },
+          ];
+        }
         const candidates = {};
-        const maxAttempts = Math.max(5000, quantity * 500);
+        const maxAttempts = 50000;
         for (let i = 0; i < maxAttempts; i++) {
           const combo = new Set();
           while (combo.size < 6) {
@@ -870,16 +909,39 @@
         const sortedCandidates = Object.entries(candidates).sort(
           ([, a], [, b]) => b - a
         );
-        return sortedCandidates
-          .slice(0, quantity)
-          .map(([comboStr, confidence]) => {
-            let label = `Confianza: ${confidence.toFixed(0)}% (Baja)`;
-            if (confidence >= 80)
-              label = `Confianza: ${confidence.toFixed(0)}% (Alta)`;
-            else if (confidence >= 60)
-              label = `Confianza: ${confidence.toFixed(0)}% (Media)`;
-            return { combination: JSON.parse(comboStr), confidence: label };
-          });
+        const bestResults = sortedCandidates.slice(0, quantity * 10);
+        const filtered = bestResults
+          .filter(([, conf]) => conf >= minConfidence)
+          .slice(0, quantity);
+        if (bestResults.length > 0 && filtered.length < quantity) {
+          showNotification(
+            `No se encontraron suficientes combinaciones con la confianza deseada. Se muestran las mejores ${
+              bestResults.slice(0, quantity).length
+            } encontradas.`
+          );
+          return bestResults
+            .slice(0, quantity)
+            .map(([comboStr, confidence]) => {
+              let label = `Confianza: ${confidence.toFixed(0)}% (Baja)`;
+              if (confidence >= 90)
+                label = `Confianza: ${confidence.toFixed(0)}% (Muy Alta)`;
+              else if (confidence >= 80)
+                label = `Confianza: ${confidence.toFixed(0)}% (Alta)`;
+              else if (confidence >= 60)
+                label = `Confianza: ${confidence.toFixed(0)}% (Media)`;
+              return { combination: JSON.parse(comboStr), confidence: label };
+            });
+        }
+        return filtered.map(([comboStr, confidence]) => {
+          let label = `Confianza: ${confidence.toFixed(0)}% (Baja)`;
+          if (confidence >= 90)
+            label = `Confianza: ${confidence.toFixed(0)}% (Muy Alta)`;
+          else if (confidence >= 80)
+            label = `Confianza: ${confidence.toFixed(0)}% (Alta)`;
+          else if (confidence >= 60)
+            label = `Confianza: ${confidence.toFixed(0)}% (Media)`;
+          return { combination: JSON.parse(comboStr), confidence: label };
+        });
       }
       function generateSimpleCombinations(quantity, strategy) {
         const combinationsSet = new Set();
@@ -930,63 +992,175 @@
           confidence: "(Estrategia Simple)",
         }));
       }
+      function calculatePowerRanking() {
+        const scores = Array.from({ length: 39 }, (_, i) => ({
+          number: i + 1,
+          score: 0,
+        }));
+        const maxFreq = analysis.frequencies[0].frequency;
+        const minFreq =
+          analysis.frequencies[analysis.frequencies.length - 1].frequency;
+        const freqMap = new Map(
+          analysis.frequencies.map((f) => [f.number, f.frequency])
+        );
+        const maxLag = analysis.lags[0].lag;
+        const minLag = analysis.lags[analysis.lags.length - 1].lag;
+        const lagMap = new Map(analysis.lags.map((l) => [l.number, l.lag]));
+        const markovScores = {};
+        const lastDrawNumbers = [
+          fullHistory[0].F1,
+          fullHistory[0].F2,
+          fullHistory[0].F3,
+          fullHistory[0].F4,
+          fullHistory[0].F5,
+          fullHistory[0].F6,
+        ];
+        for (let i = 1; i <= 39; i++) {
+          let mScore = 0;
+          for (const prevNum of lastDrawNumbers) {
+            if (
+              analysis.markovTransitions[prevNum] &&
+              analysis.markovTransitions[prevNum][i]
+            ) {
+              mScore += analysis.markovTransitions[prevNum][i];
+            }
+          }
+          markovScores[i] = mScore;
+        }
+        const maxMarkov = Math.max(...Object.values(markovScores));
+        scores.forEach((item) => {
+          const freqScore =
+            ((freqMap.get(item.number) || minFreq) - minFreq) /
+            (maxFreq - minFreq);
+          const lagScore =
+            ((lagMap.get(item.number) || minLag) - minLag) / (maxLag - minLag);
+          const markovScoreNorm =
+            (markovScores[item.number] || 0) / (maxMarkov || 1);
+          item.score = freqScore * 0.4 + lagScore * 0.3 + markovScoreNorm * 0.3;
+        });
+        return scores.sort((a, b) => b.score - a.score);
+      }
 
       // --- RENDERIZADO DE UI ---
       function setupUI() {
         document
           .getElementById("btn-show-stats")
           .addEventListener("click", () => {
-            switchView("stats-dashboard");
+            switchView(buildStatsDashboardHTML());
             displayStats();
           });
         document
           .getElementById("btn-show-history")
           .addEventListener("click", () => {
-            switchView("history-container");
+            switchView(buildHistoryViewHTML());
             displayHistory();
+          });
+        document
+          .getElementById("btn-show-predictions")
+          .addEventListener("click", () => {
+            switchView(buildPredictionsViewHTML());
+            displayPredictions();
           });
         document
           .getElementById("btn-show-generator")
           .addEventListener("click", () => {
-            switchView("interactive-container");
-            displayGenerator();
+            switchView(buildGeneratorHTML());
+            const strategySelect = document.getElementById("strategy-select");
+            const numBallsControl =
+              document.getElementById("num-balls-control");
+            const confidenceControl = document.getElementById(
+              "min-confidence-control"
+            );
+            const quantityInput =
+              document.getElementById("quantity-input").previousElementSibling;
+            const handleStrategyChange = () => {
+              if (strategySelect.value === "inteligente") {
+                numBallsControl.classList.remove("hidden");
+                handleNumBallsChange();
+              } else {
+                numBallsControl.classList.add("hidden");
+                confidenceControl.classList.add("hidden");
+                quantityInput.textContent = "Cantidad de Combinaciones:";
+              }
+            };
+            const handleNumBallsChange = () => {
+              const numBalls = parseInt(
+                document.getElementById("num-balls-select").value
+              );
+              if (numBalls === 6) {
+                confidenceControl.classList.remove("hidden");
+                quantityInput.textContent = "Cantidad de Combinaciones:";
+              } else {
+                confidenceControl.classList.add("hidden");
+                quantityInput.textContent = "Cantidad de Grupos:";
+              }
+            };
+            document
+              .getElementById("num-balls-select")
+              .addEventListener("change", handleNumBallsChange);
+            strategySelect.addEventListener("change", handleStrategyChange);
+            handleStrategyChange();
+            document
+              .getElementById("btn-generate")
+              .addEventListener("click", handleGeneration);
           });
         document
           .getElementById("btn-show-rater")
           .addEventListener("click", () => {
-            switchView("interactive-container");
-            displayRater();
+            switchView(buildRaterHTML());
+            document
+              .getElementById("btn-rate")
+              .addEventListener("click", handleRating);
           });
         document
           .getElementById("btn-show-verifier")
           .addEventListener("click", () => {
-            switchView("interactive-container");
-            displayVerifier();
+            switchView(buildVerifierHTML());
+            document
+              .getElementById("btn-verify")
+              .addEventListener("click", handleVerification);
           });
         document
           .getElementById("btn-show-reviewer")
           .addEventListener("click", () => {
-            switchView("interactive-container");
+            switchView(buildReviewerHTML());
             displayReviewer();
           });
         document
           .getElementById("btn-adjust-strategy")
           .addEventListener("click", adjustStrategy);
+        document
+          .getElementById("btn-recalculate-weights")
+          .addEventListener("click", showRecalculateConfirmation);
         setupUploadListeners();
       }
-      function switchView(viewIdToShow) {
-        const mainViews = [
-          "stats-dashboard",
-          "history-container",
-          "interactive-container",
-        ];
-        mainViews.forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.classList.add("hidden");
-        });
-        const viewToShow = document.getElementById(viewIdToShow);
-        if (viewToShow) viewToShow.classList.remove("hidden");
+
+      function switchView(innerHTML) {
+        const viewContainer = document.getElementById("view-container");
+        viewContainer.innerHTML = innerHTML;
       }
+      function buildStatsDashboardHTML() {
+        return `<div id="stats-dashboard"><h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">Dashboard de Estadísticas</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-fire mr-2 text-red-500"></i>Frecuencia</h3><div class="flex flex-col sm:flex-row sm:justify-between gap-4"><div><h4 class="font-bold text-red-400">🔥 Calientes</h4><div id="hot-numbers" class="flex flex-wrap gap-2 mt-2"></div></div><div><h4 class="font-bold text-blue-400">❄️ Fríos</h4><div id="cold-numbers" class="flex flex-wrap gap-2 mt-2"></div></div></div></div><div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-hourglass-half mr-2 text-yellow-500"></i>Atraso de Números</h3><div id="atraso-numbers"></div></div><div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-link mr-2 text-green-500"></i>Pares Más Frecuentes</h3><div id="top-pairs"></div></div><div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-calculator mr-2 text-cyan-500"></i>Análisis de Sumas</h3><div id="sum-analysis"></div></div><div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-divide mr-2 text-pink-500"></i>Pares e Impares</h3><div id="odd-even-analysis"></div></div><div class="stat-card p-4 rounded-lg"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-layer-group mr-2 text-purple-500"></i>Distribución de Decenas</h3><div id="tens-analysis"></div></div><div class="stat-card p-4 rounded-lg lg:col-span-3"><h3 class="text-xl font-semibold mb-3"><i class="fas fa-balance-scale mr-2 text-orange-500"></i>Pesos de Estrategia Inteligente</h3><div id="strategy-weights" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"></div></div></div></div>`;
+      }
+      function buildHistoryViewHTML() {
+        return `<div id="history-container"></div>`;
+      }
+      function buildPredictionsViewHTML() {
+        return `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Predicciones del Modelo (Markov)</h2><p class="text-gray-400 mb-6">Basado en el último sorteo, estos son los 5 números con mayor probabilidad de aparecer a continuación de cada número ganador.</p><div id="predictions-content" class="space-y-4"></div></div>`;
+      }
+      function buildGeneratorHTML() {
+        return `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Generador de Combinaciones</h2><div class="flex flex-col space-y-4"><div><label for="strategy-select" class="block mb-2 font-semibold">Elige una Estrategia:</label><select id="strategy-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="inteligente">Estrategia Inteligente (Recomendado)</option><option value="calientes">Usar Números Calientes</option><option value="frios">Usar Números Fríos</option><option value="3_pares_3_impares">3 Pares y 3 Impares</option><option value="suma_frecuente">Suma en Rango Frecuente</option><option value="aleatorio">Completamente Aleatorio</option></select></div><div id="num-balls-control" class="hidden"><label for="num-balls-select" class="block mb-2 font-semibold">Números a Jugar:</label><select id="num-balls-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="6">6 Números (Combinación Simple)</option><option value="7">7 Números</option><option value="8">8 Números</option><option value="9">9 Números</option><option value="10">10 Números</option></select></div><div id="min-confidence-control" class="hidden"> <label for="confidence-select" class="block mb-2 font-semibold">Nivel de Confianza Mínimo:</label> <select id="confidence-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="90">Muy Alta (90%+)</option> <option value="80">Alta (80%+)</option> <option value="60">Media (60%+)</option> <option value="0" selected>Cualquiera</option> </select> </div><div><label for="quantity-input" class="block mb-2 font-semibold">Cantidad de Sugerencias:</label><input id="quantity-input" type="number" value="10" min="1" max="50" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"></div><button id="btn-generate" class="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded-lg text-lg font-semibold">Generar</button></div><div id="results-container" class="mt-6"></div></div>`;
+      }
+      function buildRaterHTML() {
+        return `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Calificador de Combinaciones</h2><p class="text-gray-400 mb-4">Introduce 6 números para ver su calificación estadística basada en las reglas actuales.</p><div class="flex flex-col space-y-4"><input id="rater-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-rate" class="w-full bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg text-lg font-semibold">Calificar Combinación</button></div><div id="rater-results" class="mt-6"></div></div>`;
+      }
+      function buildVerifierHTML() {
+        return `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Verificador de Histórico (Backtesting)</h2><p class="text-gray-400 mb-4">Introduce 6 números separados por comas para ver su rendimiento histórico.</p><div class="flex flex-col space-y-4"><input id="verifier-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-verify" class="w-full bg-teal-600 hover:bg-teal-700 p-3 rounded-lg text-lg font-semibold">Verificar</button></div><div id="verifier-results" class="mt-6"></div></div>`;
+      }
+      function buildReviewerHTML() {
+        return `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Revisar Sugerencias Pasadas</h2><div id="reviewer-content">Cargando sugerencias...</div></div>`;
+      }
+
       function displayLatestResult() {
         if (fullHistory.length === 0) {
           document.getElementById("latest-draw-card").classList.add("hidden");
@@ -1103,22 +1277,25 @@
           )
           .join("");
       }
-      function displayGenerator() {
-        const container = document.getElementById("interactive-container");
-        container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Generador de Combinaciones</h2><div class="flex flex-col space-y-4"><div><label for="strategy-select" class="block mb-2 font-semibold">Elige una Estrategia:</label><select id="strategy-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="inteligente">Estrategia Inteligente (Recomendado)</option><option value="calientes">Usar Números Calientes</option><option value="frios">Usar Números Fríos</option><option value="3_pares_3_impares">3 Pares y 3 Impares</option><option value="suma_frecuente">Suma en Rango Frecuente</option><option value="aleatorio">Completamente Aleatorio</option></select></div><div><label for="quantity-input" class="block mb-2 font-semibold">Cantidad de Combinaciones:</label><input id="quantity-input" type="number" value="10" min="1" max="50" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"></div><button id="btn-generate" class="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded-lg text-lg font-semibold">Generar</button></div><div id="results-container" class="mt-6"></div></div>`;
-        document
-          .getElementById("btn-generate")
-          .addEventListener("click", handleGeneration);
-      }
-      async function handleGeneration() {
+      function handleGeneration() {
         const strategy = document.getElementById("strategy-select").value;
         const quantity = parseInt(
           document.getElementById("quantity-input").value
         );
         let results;
         if (strategy === "inteligente") {
-          results = generateIntelligentCombinations(quantity);
-          if (results.length > 0) {
+          const minConfidence = parseInt(
+            document.getElementById("confidence-select").value
+          );
+          const numBalls = parseInt(
+            document.getElementById("num-balls-select").value
+          );
+          results = generateIntelligentCombinations(
+            quantity,
+            minConfidence,
+            numBalls
+          );
+          if (results.length > 0 && numBalls === 6) {
             const suggestionsToSave = results.map((r) => ({
               combinacion: JSON.stringify(r.combination),
               confidence: r.confidence,
@@ -1131,10 +1308,13 @@
               batch.set(newDocRef, sug);
             });
             try {
-              await batch.commit();
-              showNotification(
-                "Sugerencias inteligentes guardadas para futura revisión."
-              );
+              batch
+                .commit()
+                .then(() =>
+                  showNotification(
+                    "Sugerencias inteligentes guardadas para futura revisión."
+                  )
+                );
             } catch (e) {
               console.error("Error al guardar sugerencias:", e);
               showNotification("Error al guardar las sugerencias.");
@@ -1161,13 +1341,6 @@
                 }</span></div>`
             )
             .join("");
-      }
-      function displayVerifier() {
-        const container = document.getElementById("interactive-container");
-        container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Verificador de Histórico (Backtesting)</h2><p class="text-gray-400 mb-4">Introduce 6 números separados por comas para ver su rendimiento histórico.</p><div class="flex flex-col space-y-4"><input id="verifier-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-verify" class="w-full bg-teal-600 hover:bg-teal-700 p-3 rounded-lg text-lg font-semibold">Verificar</button></div><div id="verifier-results" class="mt-6"></div></div>`;
-        document
-          .getElementById("btn-verify")
-          .addEventListener("click", handleVerification);
       }
       function handleVerification() {
         const input = document.getElementById("verifier-input").value;
@@ -1211,13 +1384,6 @@
           )
           .join("")}`;
       }
-      function displayRater() {
-        const container = document.getElementById("interactive-container");
-        container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Calificador de Combinaciones</h2><p class="text-gray-400 mb-4">Introduce 6 números para ver su calificación estadística basada en las reglas actuales.</p><div class="flex flex-col space-y-4"><input id="rater-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-rate" class="w-full bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg text-lg font-semibold">Calificar Combinación</button></div><div id="rater-results" class="mt-6"></div></div>`;
-        document
-          .getElementById("btn-rate")
-          .addEventListener("click", handleRating);
-      }
       function handleRating() {
         const input = document.getElementById("rater-input").value;
         const numbers = input
@@ -1254,8 +1420,9 @@
         )}%</span> </div> </div>`;
       }
       async function displayReviewer() {
-        const container = document.getElementById("interactive-container");
-        container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Revisar Sugerencias Pasadas</h2><div id="reviewer-content">Cargando sugerencias...</div></div>`;
+        const container = document.getElementById("view-container");
+        container.innerHTML = buildReviewerHTML();
+        const reviewerContent = document.getElementById("reviewer-content");
         try {
           const suggestionsSnapshot = await getDocs(
             query(
@@ -1271,9 +1438,7 @@
             suggestionsByDraw[key].push(data);
           });
           if (Object.keys(suggestionsByDraw).length === 0) {
-            document.getElementById(
-              "reviewer-content"
-            ).innerHTML = `<p class="text-gray-400">No se encontraron sugerencias guardadas. Genera algunas con la "Estrategia Inteligente" primero.</p>`;
+            reviewerContent.innerHTML = `<p class="text-gray-400">No se encontraron sugerencias guardadas. Genera algunas con la "Estrategia Inteligente" primero.</p>`;
             return;
           }
           let optionsHTML = Object.keys(suggestionsByDraw)
@@ -1283,9 +1448,7 @@
                 `<option value="${drawNum}">Sorteo ${drawNum}</option>`
             )
             .join("");
-          document.getElementById(
-            "reviewer-content"
-          ).innerHTML = ` <div class="flex flex-col space-y-4"> <label for="review-draw-select" class="block mb-2 font-semibold">Selecciona un sorteo para revisar:</label> <select id="review-draw-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600">${optionsHTML}</select> <div id="review-results-area" class="mt-6 space-y-4"></div> </div>`;
+          reviewerContent.innerHTML = ` <div class="flex flex-col space-y-4"> <label for="review-draw-select" class="block mb-2 font-semibold">Selecciona un sorteo para revisar:</label> <select id="review-draw-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600">${optionsHTML}</select> <div id="review-results-area" class="mt-6 space-y-4"></div> </div>`;
           const select = document.getElementById("review-draw-select");
           select.addEventListener("change", (e) =>
             handleReviewSelection(e.target.value, suggestionsByDraw)
@@ -1293,9 +1456,7 @@
           handleReviewSelection(select.value, suggestionsByDraw);
         } catch (e) {
           console.error("Error cargando sugerencias:", e);
-          document.getElementById(
-            "reviewer-content"
-          ).innerHTML = `<p class="text-red-500">Error al cargar las sugerencias.</p>`;
+          reviewerContent.innerHTML = `<p class="text-red-500">Error al cargar las sugerencias.</p>`;
         }
       }
       function handleReviewSelection(drawNumberStr, suggestionsByDraw) {
@@ -1375,6 +1536,44 @@
         reviewArea.innerHTML = html;
       }
 
+      function displayPredictions() {
+        const container = document.getElementById("view-container");
+        container.innerHTML = buildPredictionsViewHTML();
+        let predictionsContent = "";
+        const lastDraw = fullHistory[0];
+        const lastDrawNumbers = [
+          lastDraw.F1,
+          lastDraw.F2,
+          lastDraw.F3,
+          lastDraw.F4,
+          lastDraw.F5,
+          lastDraw.F6,
+        ];
+        lastDrawNumbers.forEach((num) => {
+          predictionsContent += `<div class="flex items-center gap-4">
+                    <span class="number-ball bg-indigo-600 text-white">${num}</span>
+                    <i class="fas fa-arrow-right text-gray-400"></i>
+                    <div class="flex flex-wrap gap-2">`;
+          const transitions = analysis.markovTransitions[num];
+          if (transitions) {
+            const top5 = Object.entries(transitions)
+              .sort(([, a], [, b]) => b - a)
+              .slice(0, 5);
+            predictionsContent += top5
+              .map(
+                ([nextNum, count]) =>
+                  `<span class="number-ball bg-gray-600 text-white">${nextNum}</span>`
+              )
+              .join("");
+          } else {
+            predictionsContent += `<span class="text-sm text-gray-500">Sin datos de transición</span>`;
+          }
+          predictionsContent += `</div></div>`;
+        });
+        document.getElementById("predictions-content").innerHTML =
+          predictionsContent;
+      }
+
       // --- FUNCIONES DE UTILIDAD ---
       function showNotification(message) {
         document.getElementById("notification-message").innerText = message;
@@ -1382,6 +1581,102 @@
           .getElementById("notification-modal")
           .classList.remove("hidden");
       }
+      function showConfirmation(message, onConfirm) {
+        const modal = document.getElementById("confirmation-modal");
+        const messageEl = document.getElementById("confirmation-message");
+        const confirmBtn = document.getElementById("btn-confirm-action");
+        const cancelBtn = document.getElementById("btn-cancel-action");
+        messageEl.textContent = message;
+        const confirmHandler = () => {
+          onConfirm();
+          modal.classList.add("hidden");
+          confirmBtn.removeEventListener("click", confirmHandler);
+          cancelBtn.removeEventListener("click", cancelHandler);
+        };
+        const cancelHandler = () => {
+          modal.classList.add("hidden");
+          confirmBtn.removeEventListener("click", confirmHandler);
+          cancelBtn.removeEventListener("click", cancelHandler);
+        };
+        confirmBtn.addEventListener("click", confirmHandler);
+        cancelBtn.addEventListener("click", cancelHandler);
+        modal.classList.remove("hidden");
+      }
+
+      function showRecalculateConfirmation() {
+        showConfirmation(
+          "¿Estás seguro? Esto recalculará los pesos de la estrategia basándose en el historial completo. El aprendizaje manual se perderá.",
+          calculateAndSetIdealWeights
+        );
+      }
+
+      async function calculateAndSetIdealWeights() {
+        if (fullHistory.length < 10) {
+          showNotification(
+            "Se necesitan al menos 10 sorteos en el histórico para calcular pesos fiables."
+          );
+          return;
+        }
+        showNotification("Calculando pesos ideales basados en el histórico...");
+        const totalDraws = fullHistory.length;
+        const ruleHits = {
+          suma_rango: 0,
+          dist_par_impar: 0,
+          mix_frecuencia: 0,
+          pares_frecuentes: 0,
+          mix_atraso: 0,
+          decenas_distribucion: 0,
+          prediccion_markov: 0,
+        };
+
+        for (const draw of fullHistory) {
+          const combo = [
+            draw.F1,
+            draw.F2,
+            draw.F3,
+            draw.F4,
+            draw.F5,
+            draw.F6,
+          ].sort((a, b) => a - b);
+          const { breakdown } = rateCombination(combo);
+          if (breakdown["Suma en Rango"] > 0) ruleHits.suma_rango++;
+          if (breakdown["Distribución Par/Impar"] > 0)
+            ruleHits.dist_par_impar++;
+          if (breakdown["Mix Frecuencia"] > 0) ruleHits.mix_frecuencia++;
+          if (breakdown["Pares Frecuentes"] > 0) ruleHits.pares_frecuentes++;
+          if (breakdown["Mix Atraso"] > 0) ruleHits.mix_atraso++;
+          if (breakdown["Distribución Decenas"] > 0)
+            ruleHits.decenas_distribucion++;
+          if (breakdown["Predicción Markov"] > 0) ruleHits.prediccion_markov++;
+        }
+
+        const hitRates = {};
+        Object.keys(ruleHits).forEach((key) => {
+          hitRates[key] = ruleHits[key] / totalDraws;
+        });
+
+        const totalRate = Object.values(hitRates).reduce(
+          (sum, rate) => sum + rate,
+          0
+        );
+
+        const idealWeights = {};
+        Object.keys(hitRates).forEach((key) => {
+          idealWeights[key] = (hitRates[key] / totalRate) * 100;
+        });
+
+        try {
+          await setDoc(configDocRef, idealWeights);
+          strategyWeights = { ...idealWeights };
+          showNotification("¡Pesos ideales calculados y guardados con éxito!");
+          switchView(buildStatsDashboardHTML());
+          displayStats();
+        } catch (e) {
+          console.error("Error al guardar pesos ideales:", e);
+          showNotification("No se pudieron guardar los nuevos pesos.");
+        }
+      }
+
       function combinations(arr, k) {
         let result = [];
         function backtrack(start, currentCombo) {

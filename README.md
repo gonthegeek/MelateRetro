@@ -11,6 +11,13 @@ El objetivo de esta herramienta no es predecir resultados con certeza, sino prop
 
 ## 🚀 Funcionalidades Principales
 
+### Predicción Avanzada y Modelado Estadístico
+
+* **Modelos de Machine Learning:** Implementación de modelos estadísticos y de aprendizaje automático (regresión logística, árboles de decisión, redes neuronales simples) para analizar el histórico y sugerir combinaciones con mayor probabilidad de éxito.
+* **Validación y Métricas:** Evaluación de la precisión de los modelos mediante validación cruzada, métricas como accuracy, precision, recall y visualización de resultados.
+* **Explicabilidad:** Cada predicción o sugerencia incluye una explicación clara de los factores estadísticos y reglas que influyeron en la decisión.
+* **Análisis de Patrones Avanzados:** Detección de correlaciones, tendencias temporales y patrones no evidentes en los resultados históricos.
+
 ### Aplicación Web
 
 * **Acceso Privado y Seguro:** Requiere autenticación por correo y contraseña, con una lista de usuarios autorizados gestionada en Firebase para garantizar que los datos sean privados y consistentes.
