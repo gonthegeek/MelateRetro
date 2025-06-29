@@ -54,6 +54,20 @@
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4),
           0 2px 3px rgba(0, 0, 0, 0.2);
       }
+      .progress-bar {
+        background-color: #374151;
+        border-radius: 0.5rem;
+        overflow: hidden;
+      }
+      .progress-bar-fill {
+        height: 100%;
+        background-color: #4f46e5;
+        text-align: right;
+        padding-right: 0.5rem;
+        color: white;
+        white-space: nowrap;
+        transition: width 0.5s ease-in-out;
+      }
       @media (min-width: 640px) {
         .number-ball {
           width: 2.5rem;
@@ -162,81 +176,88 @@
 
         <!-- Controles Principales -->
         <div
-          class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-10 gap-3 mb-8"
+          class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 gap-3 mb-8"
         >
           <button
             data-view="stats-dashboard"
-            class="view-btn bg-indigo-600 hover:bg-indigo-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-indigo-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-chart-pie sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Estadísticas</span>
           </button>
           <button
+            data-view="diagnostics-view"
+            class="view-btn col-span-1 bg-green-600 hover:bg-green-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+          >
+            <i class="fas fa-stethoscope sm:mr-2 mb-1 sm:mb-0"></i
+            ><span class="text-center">Diagnóstico</span>
+          </button>
+          <button
             data-view="predictions-view"
-            class="view-btn bg-violet-600 hover:bg-violet-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-violet-600 hover:bg-violet-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-lightbulb sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Predicciones</span>
           </button>
           <button
             data-view="history-view"
-            class="view-btn bg-blue-600 hover:bg-blue-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-blue-600 hover:bg-blue-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-history sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Histórico</span>
           </button>
           <button
             data-view="generator-view"
-            class="view-btn bg-purple-600 hover:bg-purple-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-purple-600 hover:bg-purple-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-magic-wand-sparkles sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Generador</span>
           </button>
           <button
             data-view="rater-view"
-            class="view-btn bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-star-half-alt sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Calificar</span>
           </button>
           <button
             data-view="verifier-view"
-            class="view-btn bg-teal-600 hover:bg-teal-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-teal-600 hover:bg-teal-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-tasks sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Verificador</span>
           </button>
           <button
             data-view="reviewer-view"
-            class="view-btn bg-pink-600 hover:bg-pink-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-pink-600 hover:bg-pink-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-search-plus sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Revisar</span>
           </button>
           <button
             data-view="top-global-view"
-            class="view-btn bg-yellow-500 hover:bg-yellow-600 text-gray-900 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-yellow-500 hover:bg-yellow-600 text-gray-900 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-trophy sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Top Global</span>
           </button>
           <button
             id="btn-adjust-strategy"
-            class="bg-amber-600 hover:bg-amber-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-amber-600 hover:bg-amber-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-brain sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Mejorar</span>
           </button>
           <button
             id="btn-recalculate-weights"
-            class="bg-rose-600 hover:bg-rose-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-rose-600 hover:bg-rose-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-calculator sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Calcular Pesos</span>
           </button>
           <button
             id="btn-upload-csv"
-            class="bg-green-600 hover:bg-green-700 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
+            class="view-btn col-span-1 bg-green-700 hover:bg-green-800 p-3 rounded-lg shadow-lg flex flex-col sm:flex-row items-center justify-center text-sm font-semibold transition-transform transform hover:scale-105"
           >
             <i class="fas fa-upload sm:mr-2 mb-1 sm:mb-0"></i
             ><span class="text-center">Cargar CSV</span>
@@ -313,11 +334,16 @@
                 </h3>
                 <div
                   id="strategy-weights"
-                  class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4"
+                  class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-9 gap-4"
                 ></div>
               </div>
             </div>
           </div>
+
+          <div id="diagnostics-view" class="main-view hidden">
+            <!-- El contenido se genera dinámicamente -->
+          </div>
+
           <div id="predictions-view" class="main-view hidden"></div>
           <div id="history-view" class="main-view hidden"></div>
           <div id="generator-view" class="main-view hidden"></div>
@@ -432,7 +458,7 @@
       );
       const bruteForceResultsCollectionRef = collection(
         db,
-        `artifacts/${appId}/public/data/bruteForceResults`
+        `artifacts/${appId}/public/data/bruteForceSuggestions`
       );
       const configDocRef = doc(
         db,
@@ -451,14 +477,17 @@
       let analysis = {};
       let strategyWeights = {};
       let lastAnalyzedDrawNumber = 0;
+
       const defaultWeights = {
-        suma_rango: 20,
+        suma_rango: 15,
         dist_par_impar: 15,
-        mix_frecuencia: 15,
-        pares_frecuentes: 10,
-        mix_atraso: 15,
+        mix_frecuencia: 10,
+        mix_atraso: 10,
         decenas_distribucion: 10,
+        pares_frecuentes: 10,
         prediccion_markov: 15,
+        consecutivos: 10,
+        terminaciones: 5,
       };
 
       window.addEventListener("DOMContentLoaded", () => {
@@ -682,6 +711,7 @@
               : fullHistory.length,
           };
         }).sort((a, b) => b.lag - a.lag);
+
         const lagThird = Math.floor(analysis.lags.length / 3);
         analysis.highLag = new Set(
           analysis.lags.slice(0, lagThird).map((l) => l.number)
@@ -689,6 +719,10 @@
         analysis.lowLag = new Set(
           analysis.lags.slice(-lagThird).map((l) => l.number)
         );
+        analysis.mediumLag = new Set(
+          analysis.lags.slice(lagThird, -lagThird).map((l) => l.number)
+        );
+
         const allPairs = fullHistory.flatMap((d) => {
           const numbers = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].sort(
             (a, b) => a - b
@@ -789,6 +823,43 @@
             }
           }
         }
+        const consecutiveCounts = fullHistory
+          .map((d) => {
+            const numbers = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].sort(
+              (a, b) => a - b
+            );
+            let consecutivePairs = 0;
+            for (let i = 0; i < numbers.length - 1; i++) {
+              if (numbers[i + 1] - numbers[i] === 1) {
+                consecutivePairs++;
+              }
+            }
+            return consecutivePairs;
+          })
+          .reduce((acc, count) => {
+            acc[count] = (acc[count] || 0) + 1;
+            return acc;
+          }, {});
+        analysis.consecutiveDistribution = Object.entries(
+          consecutiveCounts
+        ).sort(([, a], [, b]) => b - a);
+        analysis.topConsecutivePatterns = analysis.consecutiveDistribution
+          .slice(0, 2)
+          .map(([pattern]) => parseInt(pattern));
+
+        const allEndings = allNumbers.map((n) => n % 10);
+        const endingCounts = allEndings.reduce((acc, ending) => {
+          acc[ending] = (acc[ending] || 0) + 1;
+          return acc;
+        }, {});
+        analysis.endingDistribution = Object.entries(endingCounts).sort(
+          ([, a], [, b]) => b - a
+        );
+        analysis.topEndings = new Set(
+          analysis.endingDistribution
+            .slice(0, 5)
+            .map(([ending]) => parseInt(ending))
+        );
       }
 
       function rateCombination(comboArr) {
@@ -796,10 +867,12 @@
         const maxScore =
           Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
         let breakdown = {};
+
         const comboSet = new Set(comboArr);
         const freqs = analysis.frequencies;
         const cold = new Set(freqs.slice(-13).map((f) => f.number));
         const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
+
         let sumaScore = 0;
         const comboSum = sum(comboArr);
         const mean = analysis.sumAnalysis.mean;
@@ -811,6 +884,7 @@
         }
         score += sumaScore;
         breakdown["Suma en Rango"] = sumaScore;
+
         let parImparScore = 0;
         const evens = comboArr.filter((n) => n % 2 === 0).length;
         const distStr = `${evens}P-${6 - evens}I`;
@@ -822,6 +896,7 @@
         }
         score += parImparScore;
         breakdown["Distribución Par/Impar"] = parImparScore;
+
         let mixFrecuenciaScore = 0;
         const coldCount = comboArr.filter((n) => cold.has(n)).length;
         const hotCount = comboArr.filter((n) => hot.has(n)).length;
@@ -835,17 +910,27 @@
         mixFrecuenciaScore = frecBalanceScore * strategyWeights.mix_frecuencia;
         score += mixFrecuenciaScore;
         breakdown["Mix Frecuencia"] = mixFrecuenciaScore;
+
         let lagMixScore = 0;
         const highLagCount = comboArr.filter((n) =>
           analysis.highLag.has(n)
         ).length;
+        const mediumLagCount = comboArr.filter((n) =>
+          analysis.mediumLag.has(n)
+        ).length;
         const lowLagCount = comboArr.filter((n) =>
           analysis.lowLag.has(n)
         ).length;
-        if (highLagCount >= 1 && lowLagCount >= 1)
-          lagMixScore = strategyWeights.mix_atraso;
+        const lagBalanceScore =
+          1 -
+          (Math.abs(highLagCount - 2) +
+            Math.abs(mediumLagCount - 2) +
+            Math.abs(lowLagCount - 2)) /
+            8;
+        lagMixScore = lagBalanceScore * strategyWeights.mix_atraso;
         score += lagMixScore;
         breakdown["Mix Atraso"] = lagMixScore;
+
         let tensScore = 0;
         const tens = [0, 0, 0, 0];
         comboArr.forEach((n) => {
@@ -863,6 +948,7 @@
         }
         score += tensScore;
         breakdown["Distribución Decenas"] = tensScore;
+
         let pairScore = 0;
         let pairHits = 0;
         for (const pair of combinations(comboArr, 2)) {
@@ -871,36 +957,64 @@
         pairScore = (pairHits / 6) * strategyWeights.pares_frecuentes;
         score += pairScore;
         breakdown["Pares Frecuentes"] = pairScore;
+
         let markovScore = 0;
-        const lastDrawNumbers = [
-          fullHistory[0].F1,
-          fullHistory[0].F2,
-          fullHistory[0].F3,
-          fullHistory[0].F4,
-          fullHistory[0].F5,
-          fullHistory[0].F6,
-        ];
-        let predictedHits = 0;
-        for (const prevNum of lastDrawNumbers) {
-          if (analysis.markovTransitions[prevNum]) {
-            const topTransitions = Object.entries(
-              analysis.markovTransitions[prevNum]
-            )
-              .sort(([, a], [, b]) => b - a)
-              .slice(0, 5)
-              .map(([num]) => parseInt(num));
-            predictedHits += comboArr.filter((n) =>
-              topTransitions.includes(n)
-            ).length;
+        if (fullHistory.length > 0) {
+          const lastDrawNumbers = [
+            fullHistory[0].F1,
+            fullHistory[0].F2,
+            fullHistory[0].F3,
+            fullHistory[0].F4,
+            fullHistory[0].F5,
+            fullHistory[0].F6,
+          ];
+          let predictedHits = 0;
+          for (const prevNum of lastDrawNumbers) {
+            if (analysis.markovTransitions[prevNum]) {
+              const topTransitions = Object.entries(
+                analysis.markovTransitions[prevNum]
+              )
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 5)
+                .map(([num]) => parseInt(num));
+              predictedHits += comboArr.filter((n) =>
+                topTransitions.includes(n)
+              ).length;
+            }
           }
+          markovScore =
+            (predictedHits / (6 * 5)) * strategyWeights.prediccion_markov;
         }
-        markovScore =
-          (predictedHits / (6 * 5)) * strategyWeights.prediccion_markov;
         score += markovScore;
         breakdown["Predicción Markov"] = markovScore;
+
+        let consecutiveScore = 0;
+        const sortedCombo = [...comboArr].sort((a, b) => a - b);
+        let consecutivePairs = 0;
+        for (let i = 0; i < sortedCombo.length - 1; i++) {
+          if (sortedCombo[i + 1] - sortedCombo[i] === 1) {
+            consecutivePairs++;
+          }
+        }
+        if (analysis.topConsecutivePatterns.includes(consecutivePairs)) {
+          consecutiveScore = strategyWeights.consecutivos;
+        }
+        score += consecutiveScore;
+        breakdown["Consecutivos"] = consecutiveScore;
+
+        let endingScore = 0;
+        const comboEndings = comboArr.map((n) => n % 10);
+        const endingHits = comboEndings.filter((ending) =>
+          analysis.topEndings.has(ending)
+        ).length;
+        endingScore = (endingHits / 6) * strategyWeights.terminaciones;
+        score += endingScore;
+        breakdown["Terminaciones"] = endingScore;
+
         const confidence = (score / maxScore) * 100;
         return { confidence, breakdown };
       }
+
       async function adjustStrategy() {
         if (fullHistory.length < 2) {
           showNotification(
@@ -931,6 +1045,7 @@
         const decayRate = 0.05;
         let changes = [];
         const { breakdown } = rateCombination(winningCombo);
+
         const ruleToWeightMap = {
           "Suma en Rango": "suma_rango",
           "Distribución Par/Impar": "dist_par_impar",
@@ -939,11 +1054,14 @@
           "Mix Atraso": "mix_atraso",
           "Distribución Decenas": "decenas_distribucion",
           "Predicción Markov": "prediccion_markov",
+          Consecutivos: "consecutivos",
+          Terminaciones: "terminaciones",
         };
-        Object.entries(breakdown).forEach(([ruleKey, score]) => {
+
+        Object.entries(breakdown).forEach(([ruleKey, ruleScore]) => {
           const weightKey = ruleToWeightMap[ruleKey];
-          if (strategyWeights[weightKey] && score !== undefined) {
-            if (score > 0) {
+          if (strategyWeights[weightKey] && ruleScore !== undefined) {
+            if (ruleScore > 0) {
               strategyWeights[weightKey] *= increaseFactor;
               changes.push(`${ruleKey}: Peso aumentado.`);
             } else {
@@ -952,6 +1070,7 @@
             }
           }
         });
+
         Object.keys(strategyWeights).forEach((key) => {
           strategyWeights[key] =
             strategyWeights[key] * (1 - decayRate) +
@@ -969,6 +1088,8 @@
           showNotification("Error al guardar la mejora de la estrategia.");
         }
       }
+
+      // FIX: Added missing functions that were deleted in a previous step
       function generateIntelligentCombinations(
         quantity,
         minConfidence,
@@ -1035,6 +1156,7 @@
           return { combination: JSON.parse(comboStr), confidence: label };
         });
       }
+
       function generateSimpleCombinations(quantity, strategy) {
         const combinationsSet = new Set();
         let attempts = 0;
@@ -1084,6 +1206,7 @@
           confidence: "(Estrategia Simple)",
         }));
       }
+
       function calculatePowerRanking() {
         const scores = Array.from({ length: 39 }, (_, i) => ({
           number: i + 1,
@@ -1136,9 +1259,39 @@
       function setupUI() {
         document.querySelectorAll(".view-btn").forEach((button) => {
           button.addEventListener("click", () => {
-            switchView(button.dataset.view);
+            const viewId = button.dataset.view;
+            document
+              .querySelectorAll(".view-btn")
+              .forEach((btn) =>
+                btn.classList.remove("bg-indigo-700", "bg-green-700")
+              );
+
+            // Lógica para resaltar el botón activo
+            document.querySelectorAll(".view-btn").forEach((btn) => {
+              btn.classList.remove("bg-indigo-700", "bg-green-700");
+              const originalColor =
+                btn.dataset.originalColor || "bg-indigo-600"; // Guardar o usar default
+              btn.classList.add(originalColor);
+            });
+
+            button.classList.remove(
+              button.dataset.originalColor || "bg-indigo-600"
+            );
+            button.classList.add(
+              viewId === "diagnostics-view" ? "bg-green-700" : "bg-indigo-700"
+            );
+
+            switchView(viewId);
           });
         });
+
+        document.querySelectorAll(".view-btn").forEach((btn) => {
+          const colorClass = Array.from(btn.classList).find((c) =>
+            c.startsWith("bg-")
+          );
+          btn.dataset.originalColor = colorClass;
+        });
+
         document
           .getElementById("btn-adjust-strategy")
           ?.addEventListener("click", adjustStrategy);
@@ -1147,6 +1300,7 @@
           ?.addEventListener("click", showRecalculateConfirmation);
         setupUploadListeners();
       }
+
       function switchView(viewId) {
         document
           .querySelectorAll(".main-view")
@@ -1155,6 +1309,7 @@
         if (viewToShow) {
           viewToShow.classList.remove("hidden");
           if (viewId === "stats-dashboard") displayStats();
+          else if (viewId === "diagnostics-view") displayDiagnosticsDashboard();
           else if (viewId === "top-global-view") displayTopGlobal();
           else if (viewId === "history-view") displayHistory();
           else if (viewId === "predictions-view") displayPredictions();
@@ -1193,6 +1348,7 @@
           )
           .join("")}</div> </div>`;
       }
+
       function displayHistory() {
         const container = document.getElementById("history-view");
         container.innerHTML =
@@ -1216,9 +1372,12 @@
             .join("") +
           `</tbody></table></div>`;
       }
+
       function displayStats() {
         if (!analysis || !analysis.frequencies) return;
         const container = document.getElementById("stats-dashboard");
+        if (!container) return;
+
         container.querySelector("#hot-numbers").innerHTML = analysis.frequencies
           .slice(0, 5)
           .map(
@@ -1254,7 +1413,11 @@
           .join("");
         container.querySelector(
           "#sum-analysis"
-        ).innerHTML = `<p class="text-sm">Suma Promedio: <b>${analysis.sumAnalysis.mean}</b></p><p class="text-sm">Rango Frecuente (25%-75%): <b>${analysis.sumAnalysis.q25} - ${analysis.sumAnalysis.q75}</b></p>`;
+        ).innerHTML = `<p class="text-sm">Suma Promedio: <b>${analysis.sumAnalysis.mean.toFixed(
+          2
+        )}</b></p><p class="text-sm">Rango Frecuente (25%-75%): <b>${analysis.sumAnalysis.q25.toFixed(
+          0
+        )} - ${analysis.sumAnalysis.q75.toFixed(0)}</b></p>`;
         container.querySelector("#odd-even-analysis").innerHTML =
           analysis.oddEvenDistribution
             .slice(0, 3)
@@ -1273,10 +1436,12 @@
             .join("");
         displayStrategyWeights();
       }
+
       function displayStrategyWeights() {
-        document.getElementById("strategy-weights").innerHTML = Object.entries(
-          strategyWeights
-        )
+        const container = document.getElementById("strategy-weights");
+        if (!container) return;
+
+        container.innerHTML = Object.entries(strategyWeights)
           .map(
             ([key, val]) =>
               `<div class="p-2 bg-gray-700 rounded-md text-center"><div class="text-xs text-gray-400">${key
@@ -1289,6 +1454,113 @@
           )
           .join("");
       }
+
+      function displayDiagnosticsDashboard() {
+        const container = document.getElementById("diagnostics-view");
+        container.innerHTML = `<h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">
+                <i class="fas fa-stethoscope mr-2 text-green-400"></i>Diagnóstico del Modelo
+            </h2>
+            <p class="text-gray-400 mb-6">
+                Esta vista muestra la tasa de acierto histórica de cada regla individual de la "Estrategia Inteligente".
+                Una tasa de acierto alta indica que la regla ha sido un buen predictor de combinaciones ganadoras en el pasado.
+            </p>
+            <div id="diagnostics-content" class="space-y-4">
+              <div class="flex justify-center items-center"><i class="fas fa-spinner fa-spin fa-2x text-indigo-400"></i><p class="ml-3">Calculando rendimiento histórico...</p></div>
+            </div>`;
+
+        setTimeout(() => {
+          const contentContainer = document.getElementById(
+            "diagnostics-content"
+          );
+          if (!contentContainer) return;
+
+          const ruleNames = Object.keys(defaultWeights);
+          const ruleHits = Object.fromEntries(ruleNames.map((key) => [key, 0]));
+          const totalDraws = fullHistory.length;
+
+          const ruleToWeightMap = {
+            "Suma en Rango": "suma_rango",
+            "Distribución Par/Impar": "dist_par_impar",
+            "Mix Frecuencia": "mix_frecuencia",
+            "Mix Atraso": "mix_atraso",
+            "Distribución Decenas": "decenas_distribucion",
+            "Pares Frecuentes": "pares_frecuentes",
+            "Predicción Markov": "prediccion_markov",
+            Consecutivos: "consecutivos",
+            Terminaciones: "terminaciones",
+          };
+
+          for (const draw of fullHistory) {
+            const combo = [
+              draw.F1,
+              draw.F2,
+              draw.F3,
+              draw.F4,
+              draw.F5,
+              draw.F6,
+            ];
+            const { breakdown } = rateCombination(combo);
+
+            Object.entries(ruleToWeightMap).forEach(([ruleName, weightKey]) => {
+              if (breakdown[ruleName] > 0) {
+                ruleHits[weightKey]++;
+              }
+            });
+          }
+
+          const hitRates = Object.entries(ruleHits)
+            .map(([key, hits]) => {
+              const percentage = (hits / totalDraws) * 100;
+              return {
+                name: key
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (l) => l.toUpperCase()),
+                percentage: percentage,
+                hits: hits,
+              };
+            })
+            .sort((a, b) => b.percentage - a.percentage);
+
+          let contentHTML = hitRates
+            .map(
+              (rule) => `
+                <div class="stat-card p-4 rounded-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="text-lg font-semibold text-indigo-300">${
+                          rule.name
+                        }</h4>
+                        <span class="font-bold text-xl text-white">${rule.percentage.toFixed(
+                          1
+                        )}%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" style="width: 0%;">
+                            <!-- El ancho se animará con JS -->
+                        </div>
+                    </div>
+                    <p class="text-right text-xs text-gray-400 mt-1">
+                        Acierto en ${rule.hits} de ${totalDraws} sorteos
+                    </p>
+                </div>
+            `
+            )
+            .join("");
+
+          contentContainer.innerHTML = contentHTML;
+
+          contentContainer
+            .querySelectorAll(".progress-bar-fill")
+            .forEach((bar, index) => {
+              setTimeout(() => {
+                bar.style.width = `${hitRates[index].percentage.toFixed(1)}%`;
+                bar.innerHTML = `<span class="font-semibold">${hitRates[
+                  index
+                ].percentage.toFixed(1)}%</span>`;
+              }, 50 * index);
+            });
+        }, 50);
+      }
+
       function displayGenerator() {
         const container = document.getElementById("generator-view");
         container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Generador de Combinaciones</h2><div class="flex flex-col space-y-4"><div><label for="strategy-select" class="block mb-2 font-semibold">Elige una Estrategia:</label><select id="strategy-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="inteligente">Estrategia Inteligente (Recomendado)</option><option value="calientes">Usar Números Calientes</option><option value="frios">Usar Números Fríos</option><option value="3_pares_3_impares">3 Pares y 3 Impares</option><option value="suma_frecuente">Suma en Rango Frecuente</option><option value="aleatorio">Completamente Aleatorio</option></select></div><div id="num-balls-control" class="hidden"><label for="num-balls-select" class="block mb-2 font-semibold">Números a Jugar:</label><select id="num-balls-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="6">6 Números (Combinación Simple)</option><option value="7">7 Números</option><option value="8">8 Números</option><option value="9">9 Números</option><option value="10">10 Números</option></select></div><div id="min-confidence-control" class="hidden"> <label for="confidence-select" class="block mb-2 font-semibold">Nivel de Confianza Mínimo:</label> <select id="confidence-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="90">Muy Alta (90%+)</option> <option value="80">Alta (80%+)</option> <option value="60">Media (60%+)</option> <option value="0" selected>Cualquiera</option> </select> </div><div><label for="quantity-input" class="block mb-2 font-semibold">Cantidad de Sugerencias:</label><input id="quantity-input" type="number" value="10" min="1" max="50" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"></div><button id="btn-generate" class="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded-lg text-lg font-semibold">Generar</button></div><div id="results-container" class="mt-6"></div></div>`;
@@ -1331,6 +1603,8 @@
           .getElementById("btn-generate")
           .addEventListener("click", handleGeneration);
       }
+
+      // FIX: Added missing handleGeneration function
       function handleGeneration() {
         const strategy = document.getElementById("strategy-select").value;
         const quantity = parseInt(
@@ -1353,7 +1627,8 @@
             const suggestionsToSave = results.map((r) => ({
               combinacion: JSON.stringify(r.combination),
               confidence: r.confidence,
-              sorteo_sugerido_para: fullHistory[0].sorteo + 1,
+              sorteo_sugerido_para:
+                fullHistory.length > 0 ? fullHistory[0].sorteo + 1 : 0,
               fecha_generacion: new Date(),
             }));
             const batch = writeBatch(db);
@@ -1396,6 +1671,7 @@
             )
             .join("");
       }
+
       function displayRater() {
         const container = document.getElementById("rater-view");
         container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Calificador de Combinaciones</h2><p class="text-gray-400 mb-4">Introduce 6 números para ver su calificación estadística basada en las reglas actuales.</p><div class="flex flex-col space-y-4"><input id="rater-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-rate" class="w-full bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg text-lg font-semibold">Calificar Combinación</button></div><div id="rater-results" class="mt-6"></div></div>`;
@@ -1403,6 +1679,8 @@
           .getElementById("btn-rate")
           .addEventListener("click", handleRating);
       }
+
+      // FIX: Added missing handleRating function
       function handleRating() {
         const input = document.getElementById("rater-input").value;
         const numbers = input
@@ -1438,6 +1716,7 @@
           0
         )}%</span> </div> </div>`;
       }
+
       function displayVerifier() {
         const container = document.getElementById("verifier-view");
         container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Verificador de Histórico (Backtesting)</h2><p class="text-gray-400 mb-4">Introduce de 6 a 10 números separados por comas para ver su rendimiento histórico.</p><div class="flex flex-col space-y-4"><input id="verifier-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-verify" class="w-full bg-teal-600 hover:bg-teal-700 p-3 rounded-lg text-lg font-semibold">Verificar</button></div><div id="verifier-results" class="mt-6"></div></div>`;
@@ -1445,6 +1724,8 @@
           .getElementById("btn-verify")
           .addEventListener("click", handleVerification);
       }
+
+      // FIX: Added missing handleVerification function
       function handleVerification() {
         const input = document.getElementById("verifier-input").value;
         const numbers = input
@@ -1512,6 +1793,7 @@
             ""
           )}</div><p class="text-center font-bold">Tuviste ${lastDrawHits} aciertos.</p></div>`;
       }
+
       async function displayReviewer() {
         const container = document.getElementById("reviewer-view");
         container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Revisar Sugerencias Pasadas</h2><div id="reviewer-content">Cargando sugerencias...</div></div>`;
@@ -1557,6 +1839,8 @@
           ).innerHTML = `<p class="text-red-500">Error al cargar las sugerencias.</p>`;
         }
       }
+
+      // FIX: Added missing handleReviewSelection function
       function handleReviewSelection(drawNumberStr, suggestionsByDraw) {
         const drawNumber = parseInt(drawNumberStr);
         const suggestions = suggestionsByDraw[drawNumber];
@@ -1670,6 +1954,7 @@
         document.getElementById("predictions-content").innerHTML =
           predictionsContent;
       }
+
       async function displayTopGlobal() {
         const container = document.getElementById("top-global-view");
         container.innerHTML = `<h2 class="text-2xl font-bold mb-4">Top 100 Global (Fuerza Bruta)</h2><p class="text-gray-400 mb-6">Estas son las mejores combinaciones encontradas después de analizar los 3.2 millones de posibilidades. Para actualizar esta lista, ejecuta el script de Python localmente.</p><div id="top-global-results" class="space-y-2">Cargando ranking...</div>`;
@@ -1688,19 +1973,24 @@
           }
           const topResults = querySnapshot.docs.map((doc) => doc.data());
           resultsContainer.innerHTML = topResults
-            .map(
-              (res) =>
-                `<div class="flex flex-col sm:flex-row items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex flex-wrap justify-center gap-2">${res.combination
-                  .map(
-                    (n) =>
-                      `<span class="number-ball bg-gray-600 text-white">${n}</span>`
-                  )
-                  .join(
-                    ""
-                  )}</div><span class="text-sm text-yellow-400 font-bold mt-2 sm:mt-0">Confianza: ${res.confidence.toFixed(
-                  2
-                )}%</span></div>`
-            )
+            .map((res) => {
+              let combination;
+              try {
+                combination = JSON.parse(res.combination);
+              } catch (e) {
+                combination = [];
+              }
+              return `<div class="flex flex-col sm:flex-row items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex flex-wrap justify-center gap-2">${combination
+                .map(
+                  (n) =>
+                    `<span class="number-ball bg-gray-600 text-white">${n}</span>`
+                )
+                .join(
+                  ""
+                )}</div><span class="text-sm text-yellow-400 font-bold mt-2 sm:mt-0">Confianza: ${res.confidence.toFixed(
+                2
+              )}%</span></div>`;
+            })
             .join("");
         } catch (error) {
           console.error("Error al cargar Top Global:", error);
@@ -1714,6 +2004,7 @@
           .getElementById("notification-modal")
           .classList.remove("hidden");
       }
+
       function showConfirmation(message, onConfirm) {
         const modal = document.getElementById("confirmation-modal");
         const messageEl = document.getElementById("confirmation-message");
@@ -1752,14 +2043,20 @@
         }
         showNotification("Calculando pesos ideales basados en el histórico...");
         const totalDraws = fullHistory.length;
-        const ruleHits = {
-          suma_rango: 0,
-          dist_par_impar: 0,
-          mix_frecuencia: 0,
-          pares_frecuentes: 0,
-          mix_atraso: 0,
-          decenas_distribucion: 0,
-          prediccion_markov: 0,
+
+        const ruleNames = Object.keys(defaultWeights);
+        const ruleHits = Object.fromEntries(ruleNames.map((key) => [key, 0]));
+
+        const ruleToWeightMap = {
+          "Suma en Rango": "suma_rango",
+          "Distribución Par/Impar": "dist_par_impar",
+          "Mix Frecuencia": "mix_frecuencia",
+          "Mix Atraso": "mix_atraso",
+          "Distribución Decenas": "decenas_distribucion",
+          "Pares Frecuentes": "pares_frecuentes",
+          "Predicción Markov": "prediccion_markov",
+          Consecutivos: "consecutivos",
+          Terminaciones: "terminaciones",
         };
 
         for (const draw of fullHistory) {
@@ -1772,15 +2069,12 @@
             draw.F6,
           ].sort((a, b) => a - b);
           const { breakdown } = rateCombination(combo);
-          if (breakdown["Suma en Rango"] > 0) ruleHits.suma_rango++;
-          if (breakdown["Distribución Par/Impar"] > 0)
-            ruleHits.dist_par_impar++;
-          if (breakdown["Mix Frecuencia"] > 0) ruleHits.mix_frecuencia++;
-          if (breakdown["Pares Frecuentes"] > 0) ruleHits.pares_frecuentes++;
-          if (breakdown["Mix Atraso"] > 0) ruleHits.mix_atraso++;
-          if (breakdown["Distribución Decenas"] > 0)
-            ruleHits.decenas_distribucion++;
-          if (breakdown["Predicción Markov"] > 0) ruleHits.prediccion_markov++;
+
+          Object.entries(ruleToWeightMap).forEach(([ruleName, weightKey]) => {
+            if (breakdown[ruleName] > 0) {
+              ruleHits[weightKey]++;
+            }
+          });
         }
 
         const hitRates = {};
@@ -1825,6 +2119,7 @@
         backtrack(0, []);
         return result;
       }
+
       function percentile(arr, p) {
         if (arr.length === 0) return 0;
         const sorted = [...arr].sort((a, b) => a - b);
@@ -1837,10 +2132,12 @@
           return sorted[base];
         }
       }
+
       function sample(arr, k) {
         const shuffled = [...arr].sort(() => 0.5 - Math.random());
         return new Set(shuffled.slice(0, k));
       }
+
       function sum(arr) {
         return arr.reduce((a, b) => a + b, 0);
       }
