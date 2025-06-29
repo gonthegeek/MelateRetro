@@ -1,16 +1,15 @@
-name: Actualizar Resultados Melate Retro
+# .github/workflows/scrapping.yml
+
+name: Actualizar y Pre-Computar Resultados
 
 on:
   schedule:
-    # Se ejecuta a las 10:00 AM UTC los domingos y miércoles.
-    # Los sorteos de Melate Retro suelen ser los martes y sábados por la noche.
-    - cron: '0 10 * * 0,3'
-  workflow_dispatch: # Permite la ejecución manual desde la pestaña "Actions" de GitHub
+    - cron: '0 10 * * 0,3' # Domingo y Miércoles
+  workflow_dispatch:
 
 jobs:
-  update-data:
+  update-and-analyze:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout del repositorio
         uses: actions/checkout@v4
@@ -18,16 +17,24 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10' # Puedes usar la versión de Python que prefieras
+          python-version: '3.10'
 
       - name: Instalar dependencias
         run: |
           python -m pip install --upgrade pip
-          pip install requests beautifulsoup4 firebase-admin
+          pip install requests beautifulsoup4 firebase-admin numpy
 
-      - name: Ejecutar script de actualización
+      - name: Ejecutar script de scraping
         env:
           FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
           FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
           APP_ID: ${{ secrets.APP_ID }}
-        run: python firebase_scraper.py 
+        run: python firebase_scraper.py
+
+      # NUEVO PASO: Ejecutar el script de pre-cómputo después del scraping
+      - name: Ejecutar script de pre-cómputo de análisis
+        env:
+          FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
+          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          APP_ID: ${{ secrets.APP_ID }}
+        run: python precompute_analysis.py

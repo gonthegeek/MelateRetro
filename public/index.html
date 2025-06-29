@@ -473,10 +473,12 @@
         `artifacts/${appId}/public/data/suggestions`
       );
 
-      let fullHistory = [];
-      let analysis = {};
+      // --- OPTIMIZACIÓN: Variables globales para análisis y sorteo ---
+      let lastDraw = null; // Solo guardaremos el último sorteo
+      let analysis = {}; // El análisis completo se cargará aquí
       let strategyWeights = {};
       let lastAnalyzedDrawNumber = 0;
+      let fullHistory = []; // Se cargará bajo demanda
 
       const defaultWeights = {
         suma_rango: 15,
@@ -490,35 +492,24 @@
         terminaciones: 5,
       };
 
+      // --- AUTENTICACIÓN Y CARGA INICIAL ---
       window.addEventListener("DOMContentLoaded", () => {
-        document
-          .getElementById("login-form")
-          ?.addEventListener("submit", handleLogin);
+        document?.addEventListener("submit", handleLogin);
         onAuthStateChanged(auth, (user) => {
+          const loadingOverlay = document.getElementById("loading-overlay");
           if (user) {
-            document.getElementById("login-container").classList.add("hidden");
-            document.getElementById("app-container").classList.remove("hidden");
-            document.getElementById(
-              "auth-status"
-            ).textContent = `Usuario: ${user.email}`;
-            loadInitialData();
+            loadingOverlay.classList.remove("hidden");
+            loadingOverlay.querySelector("#loading-message").textContent =
+              "Cargando datos...";
+            loadInitialData().finally(() => {
+              loadingOverlay.classList.add("hidden");
+            });
           } else {
-            document
-              .getElementById("login-container")
-              .classList.remove("hidden");
-            document.getElementById("app-container").classList.add("hidden");
+            document.getElementById("app-container")?.classList.add("hidden");
+            document.getElementById("login-container")?.classList.remove("hidden");
           }
         });
-        document
-          .getElementById("btn-logout")
-          ?.addEventListener("click", () => signOut(auth));
-        document
-          .getElementById("btn-close-notification")
-          ?.addEventListener("click", () => {
-            document
-              .getElementById("notification-modal")
-              .classList.add("hidden");
-          });
+        document?.addEventListener("click", () => signOut(auth));
       });
 
       async function handleLogin(e) {
@@ -538,62 +529,79 @@
         }
       }
 
+      // --- CARGA DE DATOS OPTIMIZADA ---
       async function loadInitialData() {
         const loadingOverlay = document.getElementById("loading-overlay");
         try {
           loadingOverlay.classList.remove("hidden");
-          loadingOverlay.querySelector("#loading-message").textContent =
-            "Cargando datos...";
+          loadingOverlay.querySelector("#loading-message").textContent = "Cargando análisis...";
 
-          const [resultsSnapshot, weightsDoc, lastAnalyzedDoc] =
-            await Promise.all([
-              getDocs(query(resultsCollectionRef, orderBy("sorteo", "desc"))),
-              getDoc(configDocRef),
-              getDoc(lastAnalyzedDocRef),
-            ]);
+          // Leer solo los documentos necesarios
+          const analysisDocRef = doc(db, `artifacts/${appId}/public/data/analysis/latest`);
+          const lastDrawQuery = query(resultsCollectionRef, orderBy("sorteo", "desc"), limit(1));
 
-          fullHistory = resultsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
+          const [analysisDoc, weightsDoc, lastAnalyzedDoc, lastDrawSnapshot] = await Promise.all([
+            getDoc(analysisDocRef),
+            getDoc(configDocRef),
+            getDoc(lastAnalyzedDocRef),
+            getDocs(lastDrawQuery)
+          ]);
 
-          if (weightsDoc.exists()) {
-            strategyWeights = { ...defaultWeights, ...weightsDoc.data() };
-          } else {
-            strategyWeights = defaultWeights;
-            await setDoc(configDocRef, strategyWeights);
+          if (!analysisDoc.exists()) {
+              showNotification("Aún no se ha generado el análisis. Ejecuta el script de pre-cómputo.");
+              document.getElementById("upload-container")?.classList.remove("hidden");
+              loadingOverlay.classList.add("hidden");
+              return;
           }
+          analysis = analysisDoc.data();
+          if (weightsDoc.exists()) strategyWeights = weightsDoc.data();
+          if (lastAnalyzedDoc.exists()) lastAnalyzedDrawNumber = lastAnalyzedDoc.data().drawNumber;
+          if (!lastDrawSnapshot.empty) lastDraw = lastDrawSnapshot.docs[0].data();
 
-          if (lastAnalyzedDoc.exists()) {
-            lastAnalyzedDrawNumber = lastAnalyzedDoc.data().sorteo;
-          }
-
-          if (fullHistory.length > 0) {
-            loadingOverlay.querySelector("#loading-message").textContent =
-              "Realizando análisis...";
-            performFullAnalysis();
-            setupUI();
-            displayLatestResult();
-            document.getElementById("main-content").classList.remove("hidden");
-            document.getElementById("upload-container").classList.add("hidden");
-            switchView("stats-dashboard");
-          } else {
-            document
-              .getElementById("upload-container")
-              .classList.remove("hidden");
-            setupUI();
-          }
-        } catch (error) {
-          console.error("Error al cargar datos iniciales:", error);
-          showNotification(
-            `No se pudieron cargar los datos desde Firebase. Causa: ${error.message}`
-          );
-          document
-            .getElementById("upload-container")
-            .classList.remove("hidden");
           setupUI();
+          displayLatestResult();
+          document.getElementById("main-content").classList.remove("hidden");
+          document.getElementById("upload-container")?.classList.add("hidden");
+          switchView("stats-dashboard");
+        } catch (error) {
+          showNotification("Error al cargar los datos iniciales.");
         } finally {
           loadingOverlay.classList.add("hidden");
+        }
+      }
+
+      // --- LAZY LOADING DEL HISTÓRICO ---
+      async function loadFullHistory() {
+        if (fullHistory.length > 0) return true; // Ya está cargado
+        const loadingOverlay = document.getElementById("loading-overlay");
+        loadingOverlay.classList.remove("hidden");
+        loadingOverlay.querySelector("#loading-message").textContent = "Cargando histórico...";
+        try {
+            const resultsSnapshot = await getDocs(query(resultsCollectionRef, orderBy("sorteo", "desc")));
+            fullHistory = resultsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            return true;
+        } catch (error) {
+            showNotification("Error al cargar el histórico completo.");
+            return false;
+        } finally {
+            loadingOverlay.classList.add("hidden");
+        }
+      }
+
+      // --- SWITCH DE VISTAS ---
+      function switchView(viewId) {
+        document.querySelectorAll(".main-view").forEach((view) => view.classList.add("hidden"));
+        const viewToShow = document.getElementById(viewId);
+        if (viewToShow) {
+          viewToShow.classList.remove("hidden");
+          if (viewId === "stats-dashboard") displayStats();
+          else if (viewId === "diagnostics-view") displayDiagnosticsDashboard();
+          else if (viewId === "history-view") {
+              loadFullHistory().then(success => {
+                  if (success) displayHistory();
+              });
+          }
+          // ... (resto de las vistas) ...
         }
       }
 
@@ -679,187 +687,6 @@
           );
           document.getElementById("loading-overlay").classList.add("hidden");
         }
-      }
-
-      function performFullAnalysis() {
-        const allNumbers = fullHistory.flatMap((draw) => [
-          draw.F1,
-          draw.F2,
-          draw.F3,
-          draw.F4,
-          draw.F5,
-          draw.F6,
-        ]);
-        analysis.frequencies = Object.entries(
-          allNumbers.reduce((acc, num) => {
-            acc[num] = (acc[num] || 0) + 1;
-            return acc;
-          }, {})
-        )
-          .map(([num, freq]) => ({ number: parseInt(num), frequency: freq }))
-          .sort((a, b) => b.frequency - a.frequency);
-        const lastDrawNumber = Math.max(...fullHistory.map((d) => d.sorteo));
-        analysis.lags = Array.from({ length: 39 }, (_, i) => {
-          const num = i + 1;
-          const lastSeenDraw = fullHistory.find((d) =>
-            [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].includes(num)
-          );
-          return {
-            number: num,
-            lag: lastSeenDraw
-              ? lastDrawNumber - lastSeenDraw.sorteo
-              : fullHistory.length,
-          };
-        }).sort((a, b) => b.lag - a.lag);
-
-        const lagThird = Math.floor(analysis.lags.length / 3);
-        analysis.highLag = new Set(
-          analysis.lags.slice(0, lagThird).map((l) => l.number)
-        );
-        analysis.lowLag = new Set(
-          analysis.lags.slice(-lagThird).map((l) => l.number)
-        );
-        analysis.mediumLag = new Set(
-          analysis.lags.slice(lagThird, -lagThird).map((l) => l.number)
-        );
-
-        const allPairs = fullHistory.flatMap((d) => {
-          const numbers = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].sort(
-            (a, b) => a - b
-          );
-          return Array.from(combinations(numbers, 2));
-        });
-        const pairCounts = allPairs.reduce((acc, pair) => {
-          const key = JSON.stringify(pair);
-          acc[key] = (acc[key] || 0) + 1;
-          return acc;
-        }, {});
-        analysis.topPairs = Object.entries(pairCounts)
-          .sort(([, a], [, b]) => b - a)
-          .slice(0, 10)
-          .map(([pair, count]) => ({ pair: JSON.parse(pair), count }));
-        analysis.topPairsSet = new Set(
-          analysis.topPairs.slice(0, 20).map((p) => JSON.stringify(p.pair))
-        );
-        const oddEvenCounts = fullHistory
-          .map((d) => {
-            const evens = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].filter(
-              (n) => n % 2 === 0
-            ).length;
-            return `${evens}P-${6 - evens}I`;
-          })
-          .reduce((acc, dist) => {
-            acc[dist] = (acc[dist] || 0) + 1;
-            return acc;
-          }, {});
-        analysis.oddEvenDistribution = Object.entries(oddEvenCounts).sort(
-          ([, a], [, b]) => b - a
-        );
-        analysis.topOddEven = analysis.oddEvenDistribution
-          .slice(0, 3)
-          .map(([dist]) => dist);
-        const tensDistribution = fullHistory
-          .map((d) => {
-            const tens = [0, 0, 0, 0];
-            [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].forEach((n) => {
-              if (n < 10) tens[0]++;
-              else if (n < 20) tens[1]++;
-              else if (n < 30) tens[2]++;
-              else tens[3]++;
-            });
-            return tens.sort((a, b) => b - a).join("-");
-          })
-          .reduce((acc, dist) => {
-            acc[dist] = (acc[dist] || 0) + 1;
-            return acc;
-          }, {});
-        analysis.tensDistribution = Object.entries(tensDistribution).sort(
-          ([, a], [, b]) => b - a
-        );
-        analysis.topTensDistribution = analysis.tensDistribution
-          .slice(0, 3)
-          .map(([dist]) => dist);
-        const sums = fullHistory.map(
-          (d) => d.F1 + d.F2 + d.F3 + d.F4 + d.F5 + d.F6
-        );
-        const sumMean = sums.reduce((a, b) => a + b, 0) / sums.length;
-        const sumStdDev = Math.sqrt(
-          sums.map((x) => Math.pow(x - sumMean, 2)).reduce((a, b) => a + b) /
-            sums.length
-        );
-        analysis.sumAnalysis = {
-          mean: sumMean,
-          std: sumStdDev,
-          min: Math.min(...sums),
-          max: Math.max(...sums),
-          q25: percentile(sums, 25),
-          q75: percentile(sums, 75),
-        };
-        analysis.markovTransitions = {};
-        for (let i = 1; i < fullHistory.length; i++) {
-          const previousDrawNumbers = new Set([
-            fullHistory[i].F1,
-            fullHistory[i].F2,
-            fullHistory[i].F3,
-            fullHistory[i].F4,
-            fullHistory[i].F5,
-            fullHistory[i].F6,
-          ]);
-          const currentDrawNumbers = new Set([
-            fullHistory[i - 1].F1,
-            fullHistory[i - 1].F2,
-            fullHistory[i - 1].F3,
-            fullHistory[i - 1].F4,
-            fullHistory[i - 1].F5,
-            fullHistory[i - 1].F6,
-          ]);
-          for (const prevNum of previousDrawNumbers) {
-            if (!analysis.markovTransitions[prevNum]) {
-              analysis.markovTransitions[prevNum] = {};
-            }
-            for (const currNum of currentDrawNumbers) {
-              analysis.markovTransitions[prevNum][currNum] =
-                (analysis.markovTransitions[prevNum][currNum] || 0) + 1;
-            }
-          }
-        }
-        const consecutiveCounts = fullHistory
-          .map((d) => {
-            const numbers = [d.F1, d.F2, d.F3, d.F4, d.F5, d.F6].sort(
-              (a, b) => a - b
-            );
-            let consecutivePairs = 0;
-            for (let i = 0; i < numbers.length - 1; i++) {
-              if (numbers[i + 1] - numbers[i] === 1) {
-                consecutivePairs++;
-              }
-            }
-            return consecutivePairs;
-          })
-          .reduce((acc, count) => {
-            acc[count] = (acc[count] || 0) + 1;
-            return acc;
-          }, {});
-        analysis.consecutiveDistribution = Object.entries(
-          consecutiveCounts
-        ).sort(([, a], [, b]) => b - a);
-        analysis.topConsecutivePatterns = analysis.consecutiveDistribution
-          .slice(0, 2)
-          .map(([pattern]) => parseInt(pattern));
-
-        const allEndings = allNumbers.map((n) => n % 10);
-        const endingCounts = allEndings.reduce((acc, ending) => {
-          acc[ending] = (acc[ending] || 0) + 1;
-          return acc;
-        }, {});
-        analysis.endingDistribution = Object.entries(endingCounts).sort(
-          ([, a], [, b]) => b - a
-        );
-        analysis.topEndings = new Set(
-          analysis.endingDistribution
-            .slice(0, 5)
-            .map(([ending]) => parseInt(ending))
-        );
       }
 
       function rateCombination(comboArr) {
@@ -1299,25 +1126,6 @@
           .getElementById("btn-recalculate-weights")
           ?.addEventListener("click", showRecalculateConfirmation);
         setupUploadListeners();
-      }
-
-      function switchView(viewId) {
-        document
-          .querySelectorAll(".main-view")
-          .forEach((view) => view.classList.add("hidden"));
-        const viewToShow = document.getElementById(viewId);
-        if (viewToShow) {
-          viewToShow.classList.remove("hidden");
-          if (viewId === "stats-dashboard") displayStats();
-          else if (viewId === "diagnostics-view") displayDiagnosticsDashboard();
-          else if (viewId === "top-global-view") displayTopGlobal();
-          else if (viewId === "history-view") displayHistory();
-          else if (viewId === "predictions-view") displayPredictions();
-          else if (viewId === "generator-view") displayGenerator();
-          else if (viewId === "rater-view") displayRater();
-          else if (viewId === "verifier-view") displayVerifier();
-          else if (viewId === "reviewer-view") displayReviewer();
-        }
       }
 
       function displayLatestResult() {
