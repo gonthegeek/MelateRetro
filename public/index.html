@@ -88,7 +88,6 @@
       </div>
     </div>
 
-    <!-- Contenedor de Login -->
     <div
       id="login-container"
       class="min-h-screen flex items-center justify-center p-4"
@@ -133,7 +132,6 @@
       </div>
     </div>
 
-    <!-- Contenedor Principal de la App (Oculto por defecto) -->
     <div
       id="app-container"
       class="hidden container mx-auto p-4 md:p-8 max-w-7xl"
@@ -161,7 +159,6 @@
       </header>
 
       <main id="main-content">
-        <!-- Tarjeta del Último Sorteo -->
         <div
           id="latest-draw-card"
           class="mb-8 p-6 bg-gray-800 rounded-lg shadow-xl border border-indigo-500/50"
@@ -170,11 +167,9 @@
             Último Sorteo Registrado
           </h2>
           <div id="latest-draw-content">
-            <!-- Contenido se llenará con JS -->
-          </div>
+            </div>
         </div>
 
-        <!-- Controles Principales -->
         <div
           class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 gap-3 mb-8"
         >
@@ -264,7 +259,6 @@
           </button>
         </div>
 
-        <!-- Contenedor de Vistas -->
         <div id="view-container">
           <div id="stats-dashboard" class="main-view hidden">
             <h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2">
@@ -341,8 +335,7 @@
           </div>
 
           <div id="diagnostics-view" class="main-view hidden">
-            <!-- El contenido se genera dinámicamente -->
-          </div>
+            </div>
 
           <div id="predictions-view" class="main-view hidden"></div>
           <div id="history-view" class="main-view hidden"></div>
@@ -374,7 +367,6 @@
       </main>
     </div>
 
-    <!-- Modal para notificaciones -->
     <div id="notification-modal" class="hidden modal-backdrop">
       <div
         class="bg-gray-800 p-6 rounded-lg shadow-2xl max-w-sm w-full text-center"
@@ -389,7 +381,6 @@
       </div>
     </div>
 
-    <!-- Modal para Confirmación -->
     <div id="confirmation-modal" class="hidden modal-backdrop">
       <div
         class="bg-gray-800 p-6 rounded-lg shadow-2xl max-w-sm w-full text-center"
@@ -494,7 +485,7 @@
 
       // --- AUTENTICACIÓN Y CARGA INICIAL ---
       window.addEventListener("DOMContentLoaded", () => {
-        document?.addEventListener("submit", handleLogin);
+        document.getElementById("login-form")?.addEventListener("submit", handleLogin);
         onAuthStateChanged(auth, (user) => {
           const loadingOverlay = document.getElementById("loading-overlay");
           if (user) {
@@ -505,11 +496,11 @@
               loadingOverlay.classList.add("hidden");
             });
           } else {
-            document.getElementById("app-container")?.classList.add("hidden");
             document.getElementById("login-container")?.classList.remove("hidden");
+            document.getElementById("app-container")?.classList.add("hidden");
           }
         });
-        document?.addEventListener("click", () => signOut(auth));
+        document.getElementById("btn-logout")?.addEventListener("click", () => signOut(auth));
       });
 
       async function handleLogin(e) {
@@ -529,14 +520,14 @@
         }
       }
 
-      // --- CARGA DE DATOS OPTIMIZADA ---
+      // --- CARGA DE DATOS OPTIMIZADA (MERGED) ---
       async function loadInitialData() {
         const loadingOverlay = document.getElementById("loading-overlay");
         try {
           loadingOverlay.classList.remove("hidden");
           loadingOverlay.querySelector("#loading-message").textContent = "Cargando análisis...";
 
-          // Leer solo los documentos necesarios
+          // OPTIMIZACIÓN: Leer solo 3 documentos en lugar de toda la colección
           const analysisDocRef = doc(db, `artifacts/${appId}/public/data/analysis/latest`);
           const lastDrawQuery = query(resultsCollectionRef, orderBy("sorteo", "desc"), limit(1));
 
@@ -554,16 +545,41 @@
               return;
           }
           analysis = analysisDoc.data();
-          if (weightsDoc.exists()) strategyWeights = weightsDoc.data();
-          if (lastAnalyzedDoc.exists()) lastAnalyzedDrawNumber = lastAnalyzedDoc.data().drawNumber;
-          if (!lastDrawSnapshot.empty) lastDraw = lastDrawSnapshot.docs[0].data();
+
+          // CORRECCIÓN: Re-hidratar las estructuras de datos para búsquedas rápidas en el cliente
+          if (analysis.topEndings_list && Array.isArray(analysis.topEndings_list)) {
+              analysis.topEndings = new Set(analysis.topEndings_list);
+          }
+          if (analysis.topPairsSet_list && Array.isArray(analysis.topPairsSet_list)) {
+              analysis.topPairsSet = new Set(analysis.topPairsSet_list.map(p => JSON.stringify(p.sort((a,b) => a-b))));
+          }
+          
+          if (weightsDoc.exists()) { 
+            strategyWeights = { ...defaultWeights, ...weightsDoc.data() };
+          } else {
+            strategyWeights = defaultWeights;
+          }
+
+          if (lastAnalyzedDoc.exists()) { 
+            lastAnalyzedDrawNumber = lastAnalyzedDoc.data().drawNumber;
+          }
+
+          if (!lastDrawSnapshot.empty) {
+            lastDraw = lastDrawSnapshot.docs[0].data();
+          }
+          
+          // Show app container after successful data load
+          document.getElementById("login-container")?.classList.add("hidden");
+          document.getElementById("app-container")?.classList.remove("hidden");
 
           setupUI();
           displayLatestResult();
           document.getElementById("main-content").classList.remove("hidden");
           document.getElementById("upload-container")?.classList.add("hidden");
           switchView("stats-dashboard");
+
         } catch (error) {
+          console.error("Error al cargar datos iniciales:", error);
           showNotification("Error al cargar los datos iniciales.");
         } finally {
           loadingOverlay.classList.add("hidden");
@@ -587,23 +603,55 @@
             loadingOverlay.classList.add("hidden");
         }
       }
-
+      
       // --- SWITCH DE VISTAS ---
       function switchView(viewId) {
         document.querySelectorAll(".main-view").forEach((view) => view.classList.add("hidden"));
         const viewToShow = document.getElementById(viewId);
+        
         if (viewToShow) {
-          viewToShow.classList.remove("hidden");
-          if (viewId === "stats-dashboard") displayStats();
-          else if (viewId === "diagnostics-view") displayDiagnosticsDashboard();
-          else if (viewId === "history-view") {
-              loadFullHistory().then(success => {
-                  if (success) displayHistory();
-              });
-          }
-          // ... (resto de las vistas) ...
+            viewToShow.classList.remove("hidden");
+            // Usar una promesa para manejar la carga asíncrona de datos
+            const loadDataAndDisplay = async () => {
+                try {
+                    switch (viewId) {
+                        case "stats-dashboard":
+                            displayStats();
+                            break;
+                        case "diagnostics-view":
+                            if (await loadFullHistory()) displayDiagnosticsDashboard();
+                            break;
+                        case "history-view":
+                            if (await loadFullHistory()) displayHistory();
+                            break;
+                        case "generator-view":
+                            if (await loadFullHistory()) displayGenerator();
+                            break;
+                        case "rater-view":
+                            displayRater();
+                            break;
+                        case "verifier-view":
+                             if (await loadFullHistory()) displayVerifier();
+                            break;
+                        case "reviewer-view":
+                             if (await loadFullHistory()) displayReviewer();
+                            break;
+                        case "predictions-view":
+                             if (await loadFullHistory()) displayPredictions();
+                            break;
+                        case "top-global-view":
+                            displayTopGlobal();
+                            break;
+                    }
+                } catch (error) {
+                    console.error(`Error switching to view ${viewId}:`, error);
+                    showNotification(`Error al cargar la vista: ${viewId}`);
+                }
+            };
+            loadDataAndDisplay();
         }
       }
+
 
       function setupUploadListeners() {
         const uploadButton = document.getElementById("btn-trigger-upload");
@@ -688,7 +736,8 @@
           document.getElementById("loading-overlay").classList.add("hidden");
         }
       }
-
+      
+      // --- RATING FUNCTION (MERGED) ---
       function rateCombination(comboArr) {
         let score = 0;
         const maxScore =
@@ -701,7 +750,7 @@
         const hot = new Set(freqs.slice(0, 13).map((f) => f.number));
 
         let sumaScore = 0;
-        const comboSum = sum(comboArr);
+        const comboSum = comboArr.reduce((a, b) => a + b, 0);
         const mean = analysis.sumAnalysis.mean;
         const std = analysis.sumAnalysis.std;
         if (Math.abs(comboSum - mean) < 0.75 * std) {
@@ -715,10 +764,10 @@
         let parImparScore = 0;
         const evens = comboArr.filter((n) => n % 2 === 0).length;
         const distStr = `${evens}P-${6 - evens}I`;
-        const distIndex = analysis.topOddEven.indexOf(distStr);
+        const distIndex = analysis.oddEvenDistribution.findIndex(d => d[0] === distStr);
         if (distIndex === 0) {
           parImparScore = strategyWeights.dist_par_impar;
-        } else if (distIndex > 0) {
+        } else if (distIndex > 0 && distIndex < 3) {
           parImparScore = strategyWeights.dist_par_impar * 0.5;
         }
         score += parImparScore;
@@ -740,37 +789,30 @@
 
         let lagMixScore = 0;
         const highLagCount = comboArr.filter((n) =>
-          analysis.highLag.has(n)
-        ).length;
-        const mediumLagCount = comboArr.filter((n) =>
-          analysis.mediumLag.has(n)
+          new Set(analysis.lags.slice(0, 13).map(l => l.number)).has(n)
         ).length;
         const lowLagCount = comboArr.filter((n) =>
-          analysis.lowLag.has(n)
+          new Set(analysis.lags.slice(-13).map(l => l.number)).has(n)
         ).length;
-        const lagBalanceScore =
-          1 -
-          (Math.abs(highLagCount - 2) +
-            Math.abs(mediumLagCount - 2) +
-            Math.abs(lowLagCount - 2)) /
-            8;
-        lagMixScore = lagBalanceScore * strategyWeights.mix_atraso;
+        if (highLagCount >= 1 && lowLagCount >= 1) {
+            lagMixScore = strategyWeights.mix_atraso;
+        }
         score += lagMixScore;
         breakdown["Mix Atraso"] = lagMixScore;
 
         let tensScore = 0;
         const tens = [0, 0, 0, 0];
         comboArr.forEach((n) => {
-          if (n < 10) tens[0]++;
-          else if (n < 20) tens[1]++;
-          else if (n < 30) tens[2]++;
+          if (n <= 9) tens[0]++;
+          else if (n <= 19) tens[1]++;
+          else if (n <= 29) tens[2]++;
           else tens[3]++;
         });
         const tensDistStr = tens.sort((a, b) => b - a).join("-");
-        const tensIndex = analysis.topTensDistribution.indexOf(tensDistStr);
+        const tensIndex = analysis.tensDistribution.findIndex(d => d[0] === tensDistStr);
         if (tensIndex === 0) {
           tensScore = strategyWeights.decenas_distribucion;
-        } else if (tensIndex > 0) {
+        } else if (tensIndex > 0 && tensIndex < 3) {
           tensScore = strategyWeights.decenas_distribucion * 0.5;
         }
         score += tensScore;
@@ -779,38 +821,26 @@
         let pairScore = 0;
         let pairHits = 0;
         for (const pair of combinations(comboArr, 2)) {
-          if (analysis.topPairsSet.has(JSON.stringify(pair))) pairHits++;
+          if (analysis.topPairsSet && analysis.topPairsSet.has(JSON.stringify(pair.sort((a,b) => a-b)))) pairHits++;
         }
         pairScore = (pairHits / 6) * strategyWeights.pares_frecuentes;
         score += pairScore;
         breakdown["Pares Frecuentes"] = pairScore;
 
         let markovScore = 0;
-        if (fullHistory.length > 0) {
-          const lastDrawNumbers = [
-            fullHistory[0].F1,
-            fullHistory[0].F2,
-            fullHistory[0].F3,
-            fullHistory[0].F4,
-            fullHistory[0].F5,
-            fullHistory[0].F6,
-          ];
+        if (lastDraw) {
+          const lastDrawNumbers = [lastDraw.F1, lastDraw.F2, lastDraw.F3, lastDraw.F4, lastDraw.F5, lastDraw.F6];
           let predictedHits = 0;
           for (const prevNum of lastDrawNumbers) {
             if (analysis.markovTransitions[prevNum]) {
-              const topTransitions = Object.entries(
-                analysis.markovTransitions[prevNum]
-              )
+              const topTransitions = Object.entries(analysis.markovTransitions[prevNum])
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 5)
                 .map(([num]) => parseInt(num));
-              predictedHits += comboArr.filter((n) =>
-                topTransitions.includes(n)
-              ).length;
+              predictedHits += comboArr.filter((n) => topTransitions.includes(n)).length;
             }
           }
-          markovScore =
-            (predictedHits / (6 * 5)) * strategyWeights.prediccion_markov;
+          markovScore = (predictedHits / (6 * 5)) * strategyWeights.prediccion_markov;
         }
         score += markovScore;
         breakdown["Predicción Markov"] = markovScore;
@@ -823,7 +853,8 @@
             consecutivePairs++;
           }
         }
-        if (analysis.topConsecutivePatterns.includes(consecutivePairs)) {
+        const topConsecutivePatterns = analysis.consecutiveDistribution.slice(0, 2).map(d => d[0]);
+        if (topConsecutivePatterns.includes(consecutivePairs)) {
           consecutiveScore = strategyWeights.consecutivos;
         }
         score += consecutiveScore;
@@ -832,7 +863,7 @@
         let endingScore = 0;
         const comboEndings = comboArr.map((n) => n % 10);
         const endingHits = comboEndings.filter((ending) =>
-          analysis.topEndings.has(ending)
+          analysis.topEndings && analysis.topEndings.has(ending)
         ).length;
         endingScore = (endingHits / 6) * strategyWeights.terminaciones;
         score += endingScore;
@@ -916,7 +947,6 @@
         }
       }
 
-      // FIX: Added missing functions that were deleted in a previous step
       function generateIntelligentCombinations(
         quantity,
         minConfidence,
@@ -1093,11 +1123,10 @@
                 btn.classList.remove("bg-indigo-700", "bg-green-700")
               );
 
-            // Lógica para resaltar el botón activo
             document.querySelectorAll(".view-btn").forEach((btn) => {
               btn.classList.remove("bg-indigo-700", "bg-green-700");
               const originalColor =
-                btn.dataset.originalColor || "bg-indigo-600"; // Guardar o usar default
+                btn.dataset.originalColor || "bg-indigo-600"; 
               btn.classList.add(originalColor);
             });
 
@@ -1129,12 +1158,12 @@
       }
 
       function displayLatestResult() {
-        if (fullHistory.length === 0) {
+        if (!lastDraw) {
           document.getElementById("latest-draw-card").classList.add("hidden");
           return;
         }
         document.getElementById("latest-draw-card").classList.remove("hidden");
-        const latest = fullHistory[0];
+        const latest = lastDraw;
         const numbers = [
           latest.F1,
           latest.F2,
@@ -1343,8 +1372,7 @@
                     </div>
                     <div class="progress-bar">
                         <div class="progress-bar-fill" style="width: 0%;">
-                            <!-- El ancho se animará con JS -->
-                        </div>
+                            </div>
                     </div>
                     <p class="text-right text-xs text-gray-400 mt-1">
                         Acierto en ${rule.hits} de ${totalDraws} sorteos
@@ -1412,7 +1440,6 @@
           .addEventListener("click", handleGeneration);
       }
 
-      // FIX: Added missing handleGeneration function
       function handleGeneration() {
         const strategy = document.getElementById("strategy-select").value;
         const quantity = parseInt(
@@ -1488,7 +1515,6 @@
           .addEventListener("click", handleRating);
       }
 
-      // FIX: Added missing handleRating function
       function handleRating() {
         const input = document.getElementById("rater-input").value;
         const numbers = input
@@ -1533,7 +1559,6 @@
           .addEventListener("click", handleVerification);
       }
 
-      // FIX: Added missing handleVerification function
       function handleVerification() {
         const input = document.getElementById("verifier-input").value;
         const numbers = input
@@ -1648,7 +1673,6 @@
         }
       }
 
-      // FIX: Added missing handleReviewSelection function
       function handleReviewSelection(drawNumberStr, suggestionsByDraw) {
         const drawNumber = parseInt(drawNumberStr);
         const suggestions = suggestionsByDraw[drawNumber];
@@ -1910,7 +1934,7 @@
           showNotification("No se pudieron guardar los nuevos pesos.");
         }
       }
-
+      
       function combinations(arr, k) {
         let result = [];
         function backtrack(start, currentCombo) {
