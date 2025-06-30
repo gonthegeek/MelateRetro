@@ -3,10 +3,10 @@
 # Descripción:
 # Este script se conecta a Firebase, carga el historial completo de resultados y
 # realiza el análisis estadístico de 9 reglas. Luego, guarda el objeto de análisis
-# completo en un ÚNICO documento en Firestore. El objetivo es reducir drásticamente
-# las lecturas de la base de datos desde la aplicación web.
+# completo en un ÚNICO documento en Firestore, asegurándose de que todos los
+# tipos de datos sean compatibles.
 #
-# Autor: Gemini (Google AI) - Versión Corregida
+# Autor: Gemini (Google AI) - Versión Corregida y Sanitizada
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -26,7 +26,6 @@ full_history = []
 
 def get_db_client():
     if not firebase_admin._apps:
-        # Lógica para cargar credenciales (local o desde secretos de GH)
         if 'FIREBASE_CREDENTIALS' in os.environ:
             creds_json = json.loads(os.environ['FIREBASE_CREDENTIALS'])
             cred = credentials.Certificate(creds_json)
@@ -51,26 +50,21 @@ def perform_full_analysis():
     
     all_numbers = [num for draw in full_history for num in [draw[f'F{j}'] for j in range(1, 7)]]
     
-    # Frecuencias
     freq_counts = Counter(all_numbers)
     analysis['frequencies'] = sorted([{'number': int(num), 'frequency': freq} for num, freq in freq_counts.items()], key=lambda x: x['frequency'], reverse=True)
     
-    # Atraso (Lag)
     last_draw_num = full_history[0]['sorteo']
     lags = {num: last_draw_num - next((d['sorteo'] for d in full_history if num in [d[f'F{j}'] for j in range(1, 7)]), last_draw_num - len(full_history)) for num in range(1, 40)}
     analysis['lags'] = sorted([{'number': num, 'lag': lag_val} for num, lag_val in lags.items()], key=lambda x: x['lag'], reverse=True)
     
-    # Pares Frecuentes
     all_pairs = [pair for d in full_history for pair in combinations(sorted([d[f'F{j}'] for j in range(1, 7)]), 2)]
     pair_counts = Counter(all_pairs)
     analysis['topPairs'] = [{'pair': list(p), 'count': c} for p, c in pair_counts.most_common(10)]
     analysis['topPairsSet_list'] = [list(p) for p, c in pair_counts.most_common(20)]
     
-    # Distribución Par/Impar
     odd_even_counts = Counter(f"{sum(1 for n in [d[f'F{j}'] for j in range(1, 7)] if n % 2 == 0)}P-{sum(1 for n in [d[f'F{j}'] for j in range(1, 7)] if n % 2 != 0)}I" for d in full_history)
     analysis['oddEvenDistribution'] = sorted(odd_even_counts.items(), key=lambda x: x[1], reverse=True)
     
-    # Distribución de Decenas
     def get_tens_dist_str(combo):
         tens = [0, 0, 0, 0]
         for n in combo:
@@ -83,9 +77,7 @@ def perform_full_analysis():
     tens_counts = Counter(get_tens_dist_str([d[f'F{j}'] for j in range(1, 7)]) for d in full_history)
     analysis['tensDistribution'] = sorted(tens_counts.items(), key=lambda x: x[1], reverse=True)
     
-    # Análisis de Sumas
     sums = [sum([d[f'F{j}'] for j in range(1, 7)]) for d in full_history]
-    # CORRECCIÓN: Convertir explícitamente todos los tipos de numpy a tipos nativos de Python
     analysis['sumAnalysis'] = {
         'mean': float(np.mean(sums)), 
         'std': float(np.std(sums)), 
@@ -95,7 +87,6 @@ def perform_full_analysis():
         'q75': float(np.percentile(sums, 75))
     }
     
-    # Transiciones de Markov
     markov = {}
     history_reversed = full_history[::-1]
     for i in range(len(history_reversed) - 1):
@@ -105,24 +96,46 @@ def perform_full_analysis():
             markov.setdefault(str(prev_num), Counter()).update(curr_draw_nums)
     analysis['markovTransitions'] = {k: dict(v) for k, v in markov.items()}
 
-    # Análisis de Consecutivos
     consecutive_counts = Counter(sum(1 for i in range(5) if sorted([d[f'F{j}'] for j in range(1, 7)])[i+1] - sorted([d[f'F{j}'] for j in range(1, 7)])[i] == 1) for d in full_history)
     analysis['consecutiveDistribution'] = sorted(consecutive_counts.items(), key=lambda x: x[1], reverse=True)
 
-    # Análisis de Terminaciones
     ending_counts = Counter(n % 10 for n in all_numbers)
     analysis['endingDistribution'] = sorted(ending_counts.items(), key=lambda x: x[1], reverse=True)
     analysis['topEndings_list'] = [item[0] for item in ending_counts.most_common(5)]
 
     print("Análisis completado.")
 
+# CORRECCIÓN: Función robusta para sanitizar los datos antes de guardarlos
+def sanitize_for_firestore(data):
+    """
+    Recorre recursivamente un dict o una lista para convertir todos los tipos de datos
+    no compatibles con Firestore a tipos compatibles.
+    """
+    if isinstance(data, dict):
+        # Asegurarse de que todas las claves sean strings
+        return {str(k): sanitize_for_firestore(v) for k, v in data.items()}
+    if isinstance(data, list):
+        return [sanitize_for_firestore(i) for i in data]
+    # Convertir tipos de numpy a tipos nativos de Python
+    if isinstance(data, np.integer):
+        return int(data)
+    if isinstance(data, np.floating):
+        return float(data)
+    # Convertir tuplas (comunes en .items()) a listas
+    if isinstance(data, tuple):
+        return list(data)
+    return data
+
 def save_analysis(db):
     """Guarda el objeto de análisis en un solo documento de Firestore."""
+    print("Sanitizando datos para Firestore...")
+    sanitized_analysis = sanitize_for_firestore(analysis)
+    
     print("Guardando análisis pre-calculado en Firestore...")
     analysis_doc_ref = db.collection(f'artifacts/{APP_ID}/public/data/analysis').document('latest')
     
     try:
-        analysis_doc_ref.set(analysis)
+        analysis_doc_ref.set(sanitized_analysis)
         print("✅ ¡Éxito! El análisis ha sido guardado en 'analysis/latest'.")
     except Exception as e:
         print(f"❌ ERROR al guardar el análisis: {e}")
