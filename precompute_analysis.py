@@ -64,6 +64,8 @@ def perform_full_analysis():
     all_pairs = [pair for d in full_history for pair in combinations(sorted([d[f'F{j}'] for j in range(1, 7)]), 2)]
     pair_counts = Counter(all_pairs)
     analysis['topPairs'] = [{'pair': list(p), 'count': c} for p, c in pair_counts.most_common(10)]
+    # CORRECCIÓN: Crear una lista separada para la lógica de calificación, que es compatible con Firestore
+    analysis['topPairsSet_list'] = [list(p) for p, c in pair_counts.most_common(20)]
     
     # Distribución Par/Impar
     odd_even_counts = Counter(f"{sum(1 for n in [d[f'F{j}'] for j in range(1, 7)] if n % 2 == 0)}P-{sum(1 for n in [d[f'F{j}'] for j in range(1, 7)] if n % 2 != 0)}I" for d in full_history)
@@ -73,16 +75,10 @@ def perform_full_analysis():
     def get_tens_dist_str(combo):
         tens = [0, 0, 0, 0]
         for n in combo:
-            # CORRECCIÓN: Se separó la lógica en un bucle for estándar
-            # El número 39 pertenece a la decena de los 30 (índice 3)
-            if n <= 9:
-                tens[0] += 1
-            elif n <= 19:
-                tens[1] += 1
-            elif n <= 29:
-                tens[2] += 1
-            else: # 30-39
-                tens[3] += 1
+            if n <= 9: tens[0] += 1
+            elif n <= 19: tens[1] += 1
+            elif n <= 29: tens[2] += 1
+            else: tens[3] += 1
         return "-".join(map(str, sorted(tens, reverse=True)))
     
     tens_counts = Counter(get_tens_dist_str([d[f'F{j}'] for j in range(1, 7)]) for d in full_history)
@@ -109,6 +105,8 @@ def perform_full_analysis():
     # Análisis de Terminaciones
     ending_counts = Counter(n % 10 for n in all_numbers)
     analysis['endingDistribution'] = sorted(ending_counts.items(), key=lambda x: x[1], reverse=True)
+    # CORRECCIÓN: Crear una lista para la lógica de calificación, que es compatible con Firestore
+    analysis['topEndings_list'] = [item[0] for item in ending_counts.most_common(5)]
 
     print("Análisis completado.")
 
@@ -118,28 +116,11 @@ def save_analysis(db):
     analysis_doc_ref = db.collection(f'artifacts/{APP_ID}/public/data/analysis').document('latest')
     
     try:
-        # Convertir sets a listas para que sean serializables
-        if 'top_pairs_set' in analysis:
-            analysis['top_pairs_set'] = [list(pair) for pair in analysis['top_pairs_set']]
-
+        # Ya no es necesario convertir sets, ya que los datos se crean como listas
         analysis_doc_ref.set(analysis)
         print("✅ ¡Éxito! El análisis ha sido guardado en 'analysis/latest'.")
     except Exception as e:
         print(f"❌ ERROR al guardar el análisis: {e}")
-        # Intentar guardar por partes si el documento es muy grande
-        if "exceeds the maximum size" in str(e):
-            print("Documento demasiado grande. Intentando guardar como subcolecciones...")
-            batch = db.batch()
-            for key, value in analysis.items():
-                doc_ref = analysis_doc_ref.collection('parts').document(key)
-                # Asegurarse de que todos los valores sean serializables
-                try:
-                    serializable_value = json.loads(json.dumps(value, default=list))
-                    batch.set(doc_ref, {'data': serializable_value})
-                except TypeError:
-                    batch.set(doc_ref, {'data': str(value)}) # Como último recurso
-            batch.commit()
-            print("✅ Análisis guardado en partes.")
 
 def main():
     db = get_db_client()
