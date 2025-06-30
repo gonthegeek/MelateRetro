@@ -64,7 +64,6 @@ def perform_full_analysis():
     all_pairs = [pair for d in full_history for pair in combinations(sorted([d[f'F{j}'] for j in range(1, 7)]), 2)]
     pair_counts = Counter(all_pairs)
     analysis['topPairs'] = [{'pair': list(p), 'count': c} for p, c in pair_counts.most_common(10)]
-    # CORRECCIÓN: Crear una lista separada para la lógica de calificación, que es compatible con Firestore
     analysis['topPairsSet_list'] = [list(p) for p, c in pair_counts.most_common(20)]
     
     # Distribución Par/Impar
@@ -86,7 +85,15 @@ def perform_full_analysis():
     
     # Análisis de Sumas
     sums = [sum([d[f'F{j}'] for j in range(1, 7)]) for d in full_history]
-    analysis['sumAnalysis'] = {'mean': np.mean(sums), 'std': np.std(sums), 'min': int(np.min(sums)), 'max': int(np.max(sums)), 'q25': np.percentile(sums, 25), 'q75': np.percentile(sums, 75)}
+    # CORRECCIÓN: Convertir explícitamente todos los tipos de numpy a tipos nativos de Python
+    analysis['sumAnalysis'] = {
+        'mean': float(np.mean(sums)), 
+        'std': float(np.std(sums)), 
+        'min': int(np.min(sums)), 
+        'max': int(np.max(sums)), 
+        'q25': float(np.percentile(sums, 25)), 
+        'q75': float(np.percentile(sums, 75))
+    }
     
     # Transiciones de Markov
     markov = {}
@@ -105,7 +112,6 @@ def perform_full_analysis():
     # Análisis de Terminaciones
     ending_counts = Counter(n % 10 for n in all_numbers)
     analysis['endingDistribution'] = sorted(ending_counts.items(), key=lambda x: x[1], reverse=True)
-    # CORRECCIÓN: Crear una lista para la lógica de calificación, que es compatible con Firestore
     analysis['topEndings_list'] = [item[0] for item in ending_counts.most_common(5)]
 
     print("Análisis completado.")
@@ -116,7 +122,6 @@ def save_analysis(db):
     analysis_doc_ref = db.collection(f'artifacts/{APP_ID}/public/data/analysis').document('latest')
     
     try:
-        # Ya no es necesario convertir sets, ya que los datos se crean como listas
         analysis_doc_ref.set(analysis)
         print("✅ ¡Éxito! El análisis ha sido guardado en 'analysis/latest'.")
     except Exception as e:
