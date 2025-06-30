@@ -60,10 +60,12 @@ def perform_full_analysis():
     all_pairs = [pair for d in full_history for pair in combinations(sorted([d[f'F{j}'] for j in range(1, 7)]), 2)]
     pair_counts = Counter(all_pairs)
     analysis['topPairs'] = [{'pair': list(p), 'count': c} for p, c in pair_counts.most_common(10)]
-    analysis['topPairsSet_list'] = [list(p) for p, c in pair_counts.most_common(20)]
+    # CORRECCIÓN: Convertir la lista de pares a una lista de strings JSON para evitar arrays anidados
+    analysis['topPairsSet_list'] = [json.dumps(sorted(list(p))) for p, c in pair_counts.most_common(20)]
     
+    # CORRECCIÓN: Convertir distribuciones a un formato de lista de objetos
     odd_even_counts = Counter(f"{sum(1 for n in [d[f'F{j}'] for j in range(1, 7)] if n % 2 == 0)}P-{sum(1 for n in [d[f'F{j}'] for j in range(1, 7)] if n % 2 != 0)}I" for d in full_history)
-    analysis['oddEvenDistribution'] = sorted(odd_even_counts.items(), key=lambda x: x[1], reverse=True)
+    analysis['oddEvenDistribution'] = [{'dist': item[0], 'count': item[1]} for item in sorted(odd_even_counts.items(), key=lambda x: x[1], reverse=True)]
     
     def get_tens_dist_str(combo):
         tens = [0, 0, 0, 0]
@@ -75,7 +77,7 @@ def perform_full_analysis():
         return "-".join(map(str, sorted(tens, reverse=True)))
     
     tens_counts = Counter(get_tens_dist_str([d[f'F{j}'] for j in range(1, 7)]) for d in full_history)
-    analysis['tensDistribution'] = sorted(tens_counts.items(), key=lambda x: x[1], reverse=True)
+    analysis['tensDistribution'] = [{'dist': item[0], 'count': item[1]} for item in sorted(tens_counts.items(), key=lambda x: x[1], reverse=True)]
     
     sums = [sum([d[f'F{j}'] for j in range(1, 7)]) for d in full_history]
     analysis['sumAnalysis'] = {
@@ -97,37 +99,28 @@ def perform_full_analysis():
     analysis['markovTransitions'] = {k: dict(v) for k, v in markov.items()}
 
     consecutive_counts = Counter(sum(1 for i in range(5) if sorted([d[f'F{j}'] for j in range(1, 7)])[i+1] - sorted([d[f'F{j}'] for j in range(1, 7)])[i] == 1) for d in full_history)
-    analysis['consecutiveDistribution'] = sorted(consecutive_counts.items(), key=lambda x: x[1], reverse=True)
+    analysis['consecutiveDistribution'] = [{'pairs': item[0], 'count': item[1]} for item in sorted(consecutive_counts.items(), key=lambda x: x[1], reverse=True)]
 
     ending_counts = Counter(n % 10 for n in all_numbers)
-    analysis['endingDistribution'] = sorted(ending_counts.items(), key=lambda x: x[1], reverse=True)
+    analysis['endingDistribution'] = [{'ending': item[0], 'count': item[1]} for item in sorted(ending_counts.items(), key=lambda x: x[1], reverse=True)]
     analysis['topEndings_list'] = [item[0] for item in ending_counts.most_common(5)]
 
     print("Análisis completado.")
 
-# CORRECCIÓN: Función robusta para sanitizar los datos antes de guardarlos
 def sanitize_for_firestore(data):
-    """
-    Recorre recursivamente un dict o una lista para convertir todos los tipos de datos
-    no compatibles con Firestore a tipos compatibles.
-    """
     if isinstance(data, dict):
-        # Asegurarse de que todas las claves sean strings
         return {str(k): sanitize_for_firestore(v) for k, v in data.items()}
     if isinstance(data, list):
         return [sanitize_for_firestore(i) for i in data]
-    # Convertir tipos de numpy a tipos nativos de Python
-    if isinstance(data, np.integer):
+    if isinstance(data, (np.integer, np.int64)):
         return int(data)
-    if isinstance(data, np.floating):
+    if isinstance(data, (np.floating, np.float64)):
         return float(data)
-    # Convertir tuplas (comunes en .items()) a listas
     if isinstance(data, tuple):
         return list(data)
     return data
 
 def save_analysis(db):
-    """Guarda el objeto de análisis en un solo documento de Firestore."""
     print("Sanitizando datos para Firestore...")
     sanitized_analysis = sanitize_for_firestore(analysis)
     
