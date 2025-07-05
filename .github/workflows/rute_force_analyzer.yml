@@ -1,0 +1,48 @@
+# .github/workflows/brute_force_analyzer.yml
+
+name: Ejecutar Análisis de Fuerza Bruta
+
+# Esto permite que el workflow se inicie de dos maneras:
+# 1. workflow_dispatch: Manualmente desde la pestaña "Actions" de tu repositorio en GitHub.
+# 2. workflow_run: Automáticamente, cuando el workflow "Actualizar y Pre-Computar Resultados" finaliza con éxito.
+on:
+  workflow_dispatch:
+  workflow_run:
+    # El nombre aquí debe coincidir EXACTAMENTE con el campo 'name' del workflow de scrapping.yml
+    workflows: ["Actualizar y Pre-Computar Resultados"]
+    types:
+      - completed
+
+jobs:
+  run-brute-force:
+    # Esta condición asegura que este job solo se ejecute si el workflow del que depende ("workflow_run") tuvo éxito.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    
+    # Aumenta el tiempo de espera máximo para este job a 6 horas (el máximo permitido)
+    # Esto es una buena práctica para jobs largos, aunque el tuyo no debería necesitar tanto.
+    timeout-minutes: 360 
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests beautifulsoup4 firebase-admin numpy
+
+      # Paso clave: Ejecutar el script de fuerza bruta
+      - name: Ejecutar brute_force_analyzer.py
+        env:
+          # Asegúrate de que estos secretos estén configurados en tu repositorio de GitHub
+          FIREBASE_CREDENTIALS: ${{ secrets.FIREBASE_CREDENTIALS }}
+          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          APP_ID: ${{ secrets.APP_ID }}
+        run: python brute_force_analyzer.py
+
