@@ -33,22 +33,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install Frontend Dependencies
         run: npm install
 
-      - name: Run Frontend Linting
-        run: npm run lint
+      - name: Run Pre-Commit Linting
+        run: pre-commit run --all-files
 
       - name: Run Frontend Tests
         run: npm test
@@ -56,10 +56,10 @@ jobs:
       - name: Install Backend Dependencies
         # Assumes your python functions are in a 'functions' directory
         run: pip install -r functions/requirements.txt
-      
+
       - name: Run Backend Linting (e.g., flake8)
         run: flake8 functions/ --count --select=E9,F63,F7,F82 --show-source --statistics
-      
+
       - name: Run Backend Tests (e.g., pytest)
         run: pytest functions/
 
