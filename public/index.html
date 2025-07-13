@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -51,7 +51,8 @@
         justify-content: center;
         border-radius: 50%;
         font-weight: bold;
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4),
+        box-shadow:
+          inset 0 2px 4px rgba(0, 0, 0, 0.4),
           0 2px 3px rgba(0, 0, 0, 0.2);
       }
       .progress-bar {
@@ -438,7 +439,7 @@
       } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
       const firebaseConfig = {
-        apiKey: "AIzaSyB3zfGgO63gc1VoWzQLeRsD09aoBMOazpg",
+        apiKey: "AIzaSyD1aCSuPzCawECNebHLLBXvj9qYr3QVjT4",
         authDomain: "analizadormelateretro.firebaseapp.com",
         projectId: "analizadormelateretro",
         storageBucket: "analizadormelateretro.firebasestorage.app",
@@ -454,23 +455,23 @@
 
       const resultsCollectionRef = collection(
         db,
-        `artifacts/${appId}/public/data/results`
+        `artifacts/${appId}/public/data/results`,
       );
       const bruteForceResultsCollectionRef = collection(
         db,
-        `artifacts/${appId}/public/data/bruteForceSuggestions`
+        `artifacts/${appId}/public/data/bruteForceSuggestions`,
       );
       const configDocRef = doc(
         db,
-        `artifacts/${appId}/public/data/config/strategyWeights`
+        `artifacts/${appId}/public/data/config/strategyWeights`,
       );
       const lastAnalyzedDocRef = doc(
         db,
-        `artifacts/${appId}/public/data/config/lastAnalyzedDraw`
+        `artifacts/${appId}/public/data/config/lastAnalyzedDraw`,
       );
       const suggestionsCollectionRef = collection(
         db,
-        `artifacts/${appId}/public/data/suggestions`
+        `artifacts/${appId}/public/data/suggestions`,
       );
 
       // --- GLOBAL VARIABLES ---
@@ -494,22 +495,35 @@
 
       // --- APP INITIALIZATION ---
       window.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("login-form")?.addEventListener("submit", handleLogin);
+        document
+          .getElementById("login-form")
+          ?.addEventListener("submit", handleLogin);
         onAuthStateChanged(auth, (user) => {
           if (user) {
             document.getElementById("login-container")?.classList.add("hidden");
-            document.getElementById("app-container")?.classList.remove("hidden");
-            document.getElementById("auth-status").textContent = `Usuario: ${user.email}`;
+            document
+              .getElementById("app-container")
+              ?.classList.remove("hidden");
+            document.getElementById("auth-status").textContent =
+              `Usuario: ${user.email}`;
             loadInitialData();
           } else {
-            document.getElementById("login-container")?.classList.remove("hidden");
+            document
+              .getElementById("login-container")
+              ?.classList.remove("hidden");
             document.getElementById("app-container")?.classList.add("hidden");
           }
         });
-        document.getElementById("btn-logout")?.addEventListener("click", () => signOut(auth));
-        document.getElementById("btn-close-notification")?.addEventListener("click", () => {
-          document.getElementById("notification-modal")?.classList.add("hidden");
-        });
+        document
+          .getElementById("btn-logout")
+          ?.addEventListener("click", () => signOut(auth));
+        document
+          .getElementById("btn-close-notification")
+          ?.addEventListener("click", () => {
+            document
+              .getElementById("notification-modal")
+              ?.classList.add("hidden");
+          });
       });
 
       async function handleLogin(e) {
@@ -518,7 +532,8 @@
         const password = document.getElementById("password").value;
         const loadingOverlay = document.getElementById("loading-overlay");
         loadingOverlay.classList.remove("hidden");
-        loadingOverlay.querySelector("#loading-message").textContent = "Autenticando...";
+        loadingOverlay.querySelector("#loading-message").textContent =
+          "Autenticando...";
         try {
           await signInWithEmailAndPassword(auth, email, password);
         } catch (error) {
@@ -533,33 +548,52 @@
         const loadingOverlay = document.getElementById("loading-overlay");
         try {
           loadingOverlay.classList.remove("hidden");
-          loadingOverlay.querySelector("#loading-message").textContent = "Cargando análisis...";
+          loadingOverlay.querySelector("#loading-message").textContent =
+            "Cargando análisis...";
 
-          const analysisDocRef = doc(db, `artifacts/${appId}/public/data/analysis/latest`);
-          const lastDrawQuery = query(resultsCollectionRef, orderBy("sorteo", "desc"), limit(1));
+          const analysisDocRef = doc(
+            db,
+            `artifacts/${appId}/public/data/analysis/latest`,
+          );
+          const lastDrawQuery = query(
+            resultsCollectionRef,
+            orderBy("sorteo", "desc"),
+            limit(1),
+          );
 
-          const [analysisDoc, weightsDoc, lastAnalyzedDoc, lastDrawSnapshot] = await Promise.all([
-            getDoc(analysisDocRef),
-            getDoc(configDocRef),
-            getDoc(lastAnalyzedDocRef),
-            getDocs(lastDrawQuery)
-          ]);
+          const [analysisDoc, weightsDoc, lastAnalyzedDoc, lastDrawSnapshot] =
+            await Promise.all([
+              getDoc(analysisDocRef),
+              getDoc(configDocRef),
+              getDoc(lastAnalyzedDocRef),
+              getDocs(lastDrawQuery),
+            ]);
 
           if (!analysisDoc.exists()) {
-              showNotification("Aún no se ha generado el análisis. Ejecuta el script de pre-cómputo.");
-              document.getElementById("upload-container")?.classList.remove("hidden");
-              return;
+            showNotification(
+              "Aún no se ha generado el análisis. Ejecuta el script de pre-cómputo.",
+            );
+            document
+              .getElementById("upload-container")
+              ?.classList.remove("hidden");
+            return;
           }
-          
+
           analysis = analysisDoc.data();
-          
-          if (analysis.topEndings_list && Array.isArray(analysis.topEndings_list)) {
-              analysis.topEndings = new Set(analysis.topEndings_list);
+
+          if (
+            analysis.topEndings_list &&
+            Array.isArray(analysis.topEndings_list)
+          ) {
+            analysis.topEndings = new Set(analysis.topEndings_list);
           }
-          if (analysis.topPairsSet_list && Array.isArray(analysis.topPairsSet_list)) {
-              analysis.topPairsSet = new Set(analysis.topPairsSet_list);
+          if (
+            analysis.topPairsSet_list &&
+            Array.isArray(analysis.topPairsSet_list)
+          ) {
+            analysis.topPairsSet = new Set(analysis.topPairsSet_list);
           }
-          
+
           if (weightsDoc.exists()) {
             strategyWeights = { ...defaultWeights, ...weightsDoc.data() };
           } else {
@@ -579,7 +613,6 @@
           document.getElementById("main-content").classList.remove("hidden");
           document.getElementById("upload-container")?.classList.add("hidden");
           switchView("stats-dashboard");
-
         } catch (error) {
           console.error("Error al cargar datos iniciales:", error);
           showNotification("Error al cargar los datos iniciales.");
@@ -592,50 +625,83 @@
         if (fullHistory.length > 0) return true;
         const loadingOverlay = document.getElementById("loading-overlay");
         loadingOverlay.classList.remove("hidden");
-        loadingOverlay.querySelector("#loading-message").textContent = "Cargando histórico...";
+        loadingOverlay.querySelector("#loading-message").textContent =
+          "Cargando histórico...";
         try {
-            const resultsSnapshot = await getDocs(query(resultsCollectionRef, orderBy("sorteo", "desc")));
-            fullHistory = resultsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-            return true;
+          const resultsSnapshot = await getDocs(
+            query(resultsCollectionRef, orderBy("sorteo", "desc")),
+          );
+          fullHistory = resultsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+          return true;
         } catch (error) {
-            showNotification("Error al cargar el histórico completo.");
-            return false;
+          showNotification("Error al cargar el histórico completo.");
+          return false;
         } finally {
-            loadingOverlay.classList.add("hidden");
+          loadingOverlay.classList.add("hidden");
         }
       }
 
       // --- VIEW SWITCHING ---
       function switchView(viewId) {
-        document.querySelectorAll(".main-view").forEach((view) => view.classList.add("hidden"));
+        document
+          .querySelectorAll(".main-view")
+          .forEach((view) => view.classList.add("hidden"));
         const viewToShow = document.getElementById(viewId);
         if (viewToShow) {
           viewToShow.classList.remove("hidden");
-          const requiresHistory = ["diagnostics-view", "history-view", "generator-view", "verifier-view", "reviewer-view", "predictions-view"];
-          
+          const requiresHistory = [
+            "diagnostics-view",
+            "history-view",
+            "generator-view",
+            "verifier-view",
+            "reviewer-view",
+            "predictions-view",
+          ];
+
           const display = async () => {
-             if (requiresHistory.includes(viewId)) {
-                const historyLoaded = await loadFullHistory();
-                if (!historyLoaded) return;
+            if (requiresHistory.includes(viewId)) {
+              const historyLoaded = await loadFullHistory();
+              if (!historyLoaded) return;
             }
             switch (viewId) {
-                case "stats-dashboard": displayStats(); break;
-                case "diagnostics-view": displayDiagnosticsDashboard(); break;
-                case "history-view": displayHistory(); break;
-                case "predictions-view": displayPredictions(); break;
-                case "generator-view": displayGenerator(); break;
-                case "rater-view": displayRater(); break;
-                case "verifier-view": displayVerifier(); break;
-                case "reviewer-view": displayReviewer(); break;
-                case "top-global-view": displayTopGlobal(); break;
+              case "stats-dashboard":
+                displayStats();
+                break;
+              case "diagnostics-view":
+                displayDiagnosticsDashboard();
+                break;
+              case "history-view":
+                displayHistory();
+                break;
+              case "predictions-view":
+                displayPredictions();
+                break;
+              case "generator-view":
+                displayGenerator();
+                break;
+              case "rater-view":
+                displayRater();
+                break;
+              case "verifier-view":
+                displayVerifier();
+                break;
+              case "reviewer-view":
+                displayReviewer();
+                break;
+              case "top-global-view":
+                displayTopGlobal();
+                break;
             }
-          }
+          };
           display();
         }
       }
-      
+
       // --- ALL OTHER FUNCTIONS RESTORED ---
-      
+
       // --- SETUP ---
       function setupUI() {
         document.querySelectorAll(".view-btn").forEach((button) => {
@@ -644,7 +710,7 @@
             document
               .querySelectorAll(".view-btn")
               .forEach((btn) =>
-                btn.classList.remove("bg-indigo-700", "bg-green-700")
+                btn.classList.remove("bg-indigo-700", "bg-green-700"),
               );
 
             document.querySelectorAll(".view-btn").forEach((btn) => {
@@ -655,10 +721,10 @@
             });
 
             button.classList.remove(
-              button.dataset.originalColor || "bg-indigo-600"
+              button.dataset.originalColor || "bg-indigo-600",
             );
             button.classList.add(
-              viewId === "diagnostics-view" ? "bg-green-700" : "bg-indigo-700"
+              viewId === "diagnostics-view" ? "bg-green-700" : "bg-indigo-700",
             );
 
             switchView(viewId);
@@ -667,7 +733,7 @@
 
         document.querySelectorAll(".view-btn").forEach((btn) => {
           const colorClass = Array.from(btn.classList).find((c) =>
-            c.startsWith("bg-")
+            c.startsWith("bg-"),
           );
           btn.dataset.originalColor = colorClass;
         });
@@ -699,12 +765,12 @@
                   draw.F4,
                   draw.F5,
                   draw.F6,
-                ].join(", ")}</td></tr>`
+                ].join(", ")}</td></tr>`,
             )
             .join("") +
           `</tbody></table></div>`;
       }
-      
+
       function displayLatestResult() {
         if (!lastDraw) {
           document.getElementById("latest-draw-card").classList.add("hidden");
@@ -719,20 +785,19 @@
           lastDraw.F5,
           lastDraw.F6,
         ];
-        document.getElementById(
-          "latest-draw-content"
-        ).innerHTML = ` <div class="flex flex-col md:flex-row justify-between items-center"> <div><p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${
-          lastDraw.sorteo
-        }</span></p><p class="text-gray-400">Fecha: <span class="font-bold text-white">${
-          lastDraw.FECHA
-        }</span></p></div> <div class="flex flex-wrap justify-center gap-2 mt-4 md:mt-0">${numbers
-          .map(
-            (n) =>
-              `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`
-          )
-          .join("")}</div> </div>`;
+        document.getElementById("latest-draw-content").innerHTML =
+          ` <div class="flex flex-col md:flex-row justify-between items-center"> <div><p class="text-gray-400">Sorteo No. <span class="font-bold text-white">${
+            lastDraw.sorteo
+          }</span></p><p class="text-gray-400">Fecha: <span class="font-bold text-white">${
+            lastDraw.FECHA
+          }</span></p></div> <div class="flex flex-wrap justify-center gap-2 mt-4 md:mt-0">${numbers
+            .map(
+              (n) =>
+                `<span class="number-ball bg-gray-700 text-gray-100">${n}</span>`,
+            )
+            .join("")}</div> </div>`;
       }
-      
+
       function displayStats() {
         if (!analysis || !analysis.frequencies) return;
         const container = document.getElementById("stats-dashboard");
@@ -742,7 +807,7 @@
           .slice(0, 5)
           .map(
             (item) =>
-              `<span class="hot-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`
+              `<span class="hot-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`,
           )
           .join("");
         container.querySelector("#cold-numbers").innerHTML =
@@ -750,14 +815,14 @@
             .slice(-5)
             .map(
               (item) =>
-                `<span class="cold-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`
+                `<span class="cold-number font-bold w-10 h-10 flex items-center justify-center rounded-full">${item.number}</span>`,
             )
             .join("");
         container.querySelector("#atraso-numbers").innerHTML = analysis.lags
           .slice(0, 5)
           .map(
             (item) =>
-              `<div class="flex justify-between items-center text-sm mb-1"><span>Número <b>${item.number}</b>:</span> <span class="font-semibold">${item.lag} sorteos</span></div>`
+              `<div class="flex justify-between items-center text-sm mb-1"><span>Número <b>${item.number}</b>:</span> <span class="font-semibold">${item.lag} sorteos</span></div>`,
           )
           .join("");
         container.querySelector("#top-pairs").innerHTML = analysis.topPairs
@@ -765,25 +830,24 @@
           .map(
             (item) =>
               `<div class="flex justify-between items-center text-sm mb-1"><span>Par <b>${item.pair.join(
-                ", "
+                ", ",
               )}</b>:</span> <span class="font-semibold">${
                 item.count
-              } veces</span></div>`
+              } veces</span></div>`,
           )
           .join("");
-        container.querySelector(
-          "#sum-analysis"
-        ).innerHTML = `<p class="text-sm">Suma Promedio: <b>${analysis.sumAnalysis.mean.toFixed(
-          2
-        )}</b></p><p class="text-sm">Rango Frecuente (25%-75%): <b>${analysis.sumAnalysis.q25.toFixed(
-          0
-        )} - ${analysis.sumAnalysis.q75.toFixed(0)}</b></p>`;
+        container.querySelector("#sum-analysis").innerHTML =
+          `<p class="text-sm">Suma Promedio: <b>${analysis.sumAnalysis.mean.toFixed(
+            2,
+          )}</b></p><p class="text-sm">Rango Frecuente (25%-75%): <b>${analysis.sumAnalysis.q25.toFixed(
+            0,
+          )} - ${analysis.sumAnalysis.q75.toFixed(0)}</b></p>`;
         container.querySelector("#odd-even-analysis").innerHTML =
           analysis.oddEvenDistribution
             .slice(0, 3)
             .map(
               (item) =>
-                `<div class="flex justify-between items-center text-sm mb-1"><span><b>${item.dist}</b>:</span> <span class="font-semibold">${item.count} veces</span></div>`
+                `<div class="flex justify-between items-center text-sm mb-1"><span><b>${item.dist}</b>:</span> <span class="font-semibold">${item.count} veces</span></div>`,
             )
             .join("");
         container.querySelector("#tens-analysis").innerHTML =
@@ -791,7 +855,7 @@
             .slice(0, 3)
             .map(
               (item) =>
-                `<div class="flex justify-between items-center text-sm mb-1"><span><b>${item.dist}</b>:</span> <span class="font-semibold">${item.count} veces</span></div>`
+                `<div class="flex justify-between items-center text-sm mb-1"><span><b>${item.dist}</b>:</span> <span class="font-semibold">${item.count} veces</span></div>`,
             )
             .join("");
         displayStrategyWeights();
@@ -821,12 +885,24 @@
 
       async function parseAndUploadCSV(csvText) {
         document.getElementById("loading-overlay").classList.remove("hidden");
-        document.getElementById("loading-message").textContent = "Procesando y subiendo CSV...";
+        document.getElementById("loading-message").textContent =
+          "Procesando y subiendo CSV...";
         const lines = csvText.trim().split("\n");
         const header = lines[0].split(",").map((h) => h.trim());
-        const requiredHeaders = ["CONCURSO", "FECHA", "F1", "F2", "F3", "F4", "F5", "F6"];
+        const requiredHeaders = [
+          "CONCURSO",
+          "FECHA",
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+        ];
         if (!requiredHeaders.every((h) => header.includes(h))) {
-          showNotification(`El archivo CSV no es válido. Columnas requeridas: ${requiredHeaders.join(", ")}`);
+          showNotification(
+            `El archivo CSV no es válido. Columnas requeridas: ${requiredHeaders.join(", ")}`,
+          );
           document.getElementById("loading-overlay").classList.add("hidden");
           return;
         }
@@ -847,24 +923,32 @@
             batch.set(newDocRef, {
               sorteo: sorteoNum,
               FECHA: record.FECHA,
-              F1: parseInt(record.F1, 10), F2: parseInt(record.F2, 10),
-              F3: parseInt(record.F3, 10), F4: parseInt(record.F4, 10),
-              F5: parseInt(record.F5, 10), F6: parseInt(record.F6, 10),
+              F1: parseInt(record.F1, 10),
+              F2: parseInt(record.F2, 10),
+              F3: parseInt(record.F3, 10),
+              F4: parseInt(record.F4, 10),
+              F5: parseInt(record.F5, 10),
+              F6: parseInt(record.F6, 10),
             });
           });
           await batch.commit();
-          showNotification(`¡Éxito! Se cargaron ${records.length} registros. La aplicación se recargará.`);
+          showNotification(
+            `¡Éxito! Se cargaron ${records.length} registros. La aplicación se recargará.`,
+          );
           setTimeout(() => window.location.reload(), 2000);
         } catch (error) {
           console.error("Error al subir el lote a Firestore:", error);
-          showNotification("Ocurrió un error al subir los datos. Revisa la consola.");
+          showNotification(
+            "Ocurrió un error al subir los datos. Revisa la consola.",
+          );
           document.getElementById("loading-overlay").classList.add("hidden");
         }
       }
-      
+
       function rateCombination(comboArr) {
         let score = 0;
-        const maxScore = Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
+        const maxScore =
+          Object.values(strategyWeights).reduce((a, b) => a + b, 0) || 100;
         let breakdown = {};
         const freqs = analysis.frequencies;
         const cold = new Set(freqs.slice(-13).map((f) => f.number));
@@ -885,7 +969,9 @@
         let parImparScore = 0;
         const evens = comboArr.filter((n) => n % 2 === 0).length;
         const distStr = `${evens}P-${6 - evens}I`;
-        const topOddEven = analysis.oddEvenDistribution.slice(0, 3).map(d => d.dist);
+        const topOddEven = analysis.oddEvenDistribution
+          .slice(0, 3)
+          .map((d) => d.dist);
         const distIndex = topOddEven.indexOf(distStr);
         if (distIndex === 0) {
           parImparScore = strategyWeights.dist_par_impar;
@@ -899,16 +985,30 @@
         const coldCount = comboArr.filter((n) => cold.has(n)).length;
         const hotCount = comboArr.filter((n) => hot.has(n)).length;
         const mediumCount = 6 - coldCount - hotCount;
-        const frecBalanceScore = 1 - (Math.abs(coldCount - 2) + Math.abs(hotCount - 2) + Math.abs(mediumCount - 2)) / 8;
+        const frecBalanceScore =
+          1 -
+          (Math.abs(coldCount - 2) +
+            Math.abs(hotCount - 2) +
+            Math.abs(mediumCount - 2)) /
+            8;
         mixFrecuenciaScore = frecBalanceScore * strategyWeights.mix_frecuencia;
         score += mixFrecuenciaScore;
         breakdown["Mix Frecuencia"] = mixFrecuenciaScore;
 
         let lagMixScore = 0;
-        const highLagCount = comboArr.filter((n) => new Set(analysis.lags.slice(0, 13).map(l => l.number)).has(n)).length;
-        const lowLagCount = comboArr.filter((n) => new Set(analysis.lags.slice(-13).map(l => l.number)).has(n)).length;
+        const highLagCount = comboArr.filter((n) =>
+          new Set(analysis.lags.slice(0, 13).map((l) => l.number)).has(n),
+        ).length;
+        const lowLagCount = comboArr.filter((n) =>
+          new Set(analysis.lags.slice(-13).map((l) => l.number)).has(n),
+        ).length;
         const mediumLagCount = 6 - highLagCount - lowLagCount;
-        const lagBalanceScore = 1 - (Math.abs(highLagCount - 2) + Math.abs(mediumLagCount - 2) + Math.abs(lowLagCount - 2)) / 8;
+        const lagBalanceScore =
+          1 -
+          (Math.abs(highLagCount - 2) +
+            Math.abs(mediumLagCount - 2) +
+            Math.abs(lowLagCount - 2)) /
+            8;
         lagMixScore = lagBalanceScore * strategyWeights.mix_atraso;
         score += lagMixScore;
         breakdown["Mix Atraso"] = lagMixScore;
@@ -922,7 +1022,9 @@
           else tens[3]++;
         });
         const tensDistStr = tens.sort((a, b) => b - a).join("-");
-        const topTens = analysis.tensDistribution.slice(0, 3).map(d => d.dist);
+        const topTens = analysis.tensDistribution
+          .slice(0, 3)
+          .map((d) => d.dist);
         const tensIndex = topTens.indexOf(tensDistStr);
         if (tensIndex === 0) {
           tensScore = strategyWeights.decenas_distribucion;
@@ -935,7 +1037,11 @@
         let pairScore = 0;
         let pairHits = 0;
         for (const pair of combinations(comboArr, 2)) {
-          if (analysis.topPairsSet && analysis.topPairsSet.has(JSON.stringify(pair.sort((a,b) => a-b)))) pairHits++;
+          if (
+            analysis.topPairsSet &&
+            analysis.topPairsSet.has(JSON.stringify(pair.sort((a, b) => a - b)))
+          )
+            pairHits++;
         }
         pairScore = (pairHits / 6) * strategyWeights.pares_frecuentes;
         score += pairScore;
@@ -943,15 +1049,30 @@
 
         let markovScore = 0;
         if (lastDraw) {
-          const lastDrawNumbers = [lastDraw.F1, lastDraw.F2, lastDraw.F3, lastDraw.F4, lastDraw.F5, lastDraw.F6];
+          const lastDrawNumbers = [
+            lastDraw.F1,
+            lastDraw.F2,
+            lastDraw.F3,
+            lastDraw.F4,
+            lastDraw.F5,
+            lastDraw.F6,
+          ];
           let predictedHits = 0;
           for (const prevNum of lastDrawNumbers) {
             if (analysis.markovTransitions[prevNum]) {
-              const topTransitions = Object.entries(analysis.markovTransitions[prevNum]).sort(([, a], [, b]) => b - a).slice(0, 5).map(([num]) => parseInt(num));
-              predictedHits += comboArr.filter((n) => topTransitions.includes(n)).length;
+              const topTransitions = Object.entries(
+                analysis.markovTransitions[prevNum],
+              )
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 5)
+                .map(([num]) => parseInt(num));
+              predictedHits += comboArr.filter((n) =>
+                topTransitions.includes(n),
+              ).length;
             }
           }
-          markovScore = (predictedHits / (6 * 5)) * strategyWeights.prediccion_markov;
+          markovScore =
+            (predictedHits / (6 * 5)) * strategyWeights.prediccion_markov;
         }
         score += markovScore;
         breakdown["Predicción Markov"] = markovScore;
@@ -962,7 +1083,9 @@
         for (let i = 0; i < sortedCombo.length - 1; i++) {
           if (sortedCombo[i + 1] - sortedCombo[i] === 1) consecutivePairs++;
         }
-        const topConsecutivePatterns = analysis.consecutiveDistribution.slice(0, 2).map(d => d.pairs);
+        const topConsecutivePatterns = analysis.consecutiveDistribution
+          .slice(0, 2)
+          .map((d) => d.pairs);
         if (topConsecutivePatterns.includes(consecutivePairs)) {
           consecutiveScore = strategyWeights.consecutivos;
         }
@@ -971,7 +1094,9 @@
 
         let endingScore = 0;
         const comboEndings = comboArr.map((n) => n % 10);
-        const endingHits = comboEndings.filter((ending) => analysis.topEndings && analysis.topEndings.has(ending)).length;
+        const endingHits = comboEndings.filter(
+          (ending) => analysis.topEndings && analysis.topEndings.has(ending),
+        ).length;
         endingScore = (endingHits / 6) * strategyWeights.terminaciones;
         score += endingScore;
         breakdown["Terminaciones"] = endingScore;
@@ -982,25 +1107,44 @@
 
       async function adjustStrategy() {
         if (fullHistory.length < 2) {
-          showNotification("Carga el histórico completo primero desde la pestaña 'Histórico'.");
+          showNotification(
+            "Carga el histórico completo primero desde la pestaña 'Histórico'.",
+          );
           return;
         }
         const lastDrawInDb = fullHistory[0];
         if (lastDrawInDb.sorteo <= lastAnalyzedDrawNumber) {
-          showNotification(`La estrategia ya fue ajustada con el sorteo ${lastDrawInDb.sorteo}. Espera un nuevo resultado.`);
+          showNotification(
+            `La estrategia ya fue ajustada con el sorteo ${lastDrawInDb.sorteo}. Espera un nuevo resultado.`,
+          );
           return;
         }
-        const winningCombo = [lastDrawInDb.F1, lastDrawInDb.F2, lastDrawInDb.F3, lastDrawInDb.F4, lastDrawInDb.F5, lastDrawInDb.F6].sort((a, b) => a - b);
-        showNotification(`Analizando sorteo ${lastDrawInDb.sorteo} para mejorar estrategia...`);
-        const increaseFactor = 1.01, decreaseFactor = 0.99, decayRate = 0.05;
+        const winningCombo = [
+          lastDrawInDb.F1,
+          lastDrawInDb.F2,
+          lastDrawInDb.F3,
+          lastDrawInDb.F4,
+          lastDrawInDb.F5,
+          lastDrawInDb.F6,
+        ].sort((a, b) => a - b);
+        showNotification(
+          `Analizando sorteo ${lastDrawInDb.sorteo} para mejorar estrategia...`,
+        );
+        const increaseFactor = 1.01,
+          decreaseFactor = 0.99,
+          decayRate = 0.05;
         let changes = [];
         const { breakdown } = rateCombination(winningCombo);
         const ruleToWeightMap = {
-          "Suma en Rango": "suma_rango", "Distribución Par/Impar": "dist_par_impar",
-          "Mix Frecuencia": "mix_frecuencia", "Pares Frecuentes": "pares_frecuentes",
-          "Mix Atraso": "mix_atraso", "Distribución Decenas": "decenas_distribucion",
-          "Predicción Markov": "prediccion_markov", "Consecutivos": "consecutivos",
-          "Terminaciones": "terminaciones",
+          "Suma en Rango": "suma_rango",
+          "Distribución Par/Impar": "dist_par_impar",
+          "Mix Frecuencia": "mix_frecuencia",
+          "Pares Frecuentes": "pares_frecuentes",
+          "Mix Atraso": "mix_atraso",
+          "Distribución Decenas": "decenas_distribucion",
+          "Predicción Markov": "prediccion_markov",
+          Consecutivos: "consecutivos",
+          Terminaciones: "terminaciones",
         };
         Object.entries(breakdown).forEach(([ruleKey, ruleScore]) => {
           const weightKey = ruleToWeightMap[ruleKey];
@@ -1015,7 +1159,9 @@
           }
         });
         Object.keys(strategyWeights).forEach((key) => {
-          strategyWeights[key] = strategyWeights[key] * (1 - decayRate) + defaultWeights[key] * decayRate;
+          strategyWeights[key] =
+            strategyWeights[key] * (1 - decayRate) +
+            defaultWeights[key] * decayRate;
         });
         changes.push("Regularización aplicada para mantener balance.");
         try {
@@ -1030,11 +1176,22 @@
         }
       }
 
-      function generateIntelligentCombinations(quantity, minConfidence, numBalls) {
+      function generateIntelligentCombinations(
+        quantity,
+        minConfidence,
+        numBalls,
+      ) {
         if (numBalls > 6) {
           const powerRanking = calculatePowerRanking();
-          const topNumbers = powerRanking.slice(0, numBalls).map((item) => item.number);
-          return [{ combination: topNumbers.sort((a, b) => a - b), confidence: `Grupo de ${numBalls} con Mayor Potencial` }];
+          const topNumbers = powerRanking
+            .slice(0, numBalls)
+            .map((item) => item.number);
+          return [
+            {
+              combination: topNumbers.sort((a, b) => a - b),
+              confidence: `Grupo de ${numBalls} con Mayor Potencial`,
+            },
+          ];
         }
         const candidates = {};
         const maxAttempts = 50000;
@@ -1047,33 +1204,65 @@
           const { confidence } = rateCombination(comboArr);
           candidates[comboKey] = confidence;
         }
-        const sortedCandidates = Object.entries(candidates).sort(([, a], [, b]) => b - a).slice(0, 100);
-        const filtered = sortedCandidates.filter(([, conf]) => conf >= minConfidence).slice(0, quantity);
+        const sortedCandidates = Object.entries(candidates)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 100);
+        const filtered = sortedCandidates
+          .filter(([, conf]) => conf >= minConfidence)
+          .slice(0, quantity);
         if (sortedCandidates.length > 0 && filtered.length < quantity) {
-          showNotification(`No se encontraron suficientes combinaciones. Se muestran las mejores ${sortedCandidates.slice(0, quantity).length} encontradas.`);
-          return sortedCandidates.slice(0, quantity).map(([comboStr, confidence]) => ({ combination: JSON.parse(comboStr), confidence: `Confianza: ${confidence.toFixed(0)}%` }));
+          showNotification(
+            `No se encontraron suficientes combinaciones. Se muestran las mejores ${sortedCandidates.slice(0, quantity).length} encontradas.`,
+          );
+          return sortedCandidates
+            .slice(0, quantity)
+            .map(([comboStr, confidence]) => ({
+              combination: JSON.parse(comboStr),
+              confidence: `Confianza: ${confidence.toFixed(0)}%`,
+            }));
         }
-        return filtered.map(([comboStr, confidence]) => ({ combination: JSON.parse(comboStr), confidence: `Confianza: ${confidence.toFixed(0)}%` }));
+        return filtered.map(([comboStr, confidence]) => ({
+          combination: JSON.parse(comboStr),
+          confidence: `Confianza: ${confidence.toFixed(0)}%`,
+        }));
       }
 
       function generateSimpleCombinations(quantity, strategy) {
         const combinationsSet = new Set();
         let attempts = 0;
         const maxAttempts = quantity * 100;
-        const hotNumbers = analysis.frequencies.slice(0, 12).map((f) => f.number);
-        const coldNumbers = analysis.frequencies.slice(-12).map((f) => f.number);
+        const hotNumbers = analysis.frequencies
+          .slice(0, 12)
+          .map((f) => f.number);
+        const coldNumbers = analysis.frequencies
+          .slice(-12)
+          .map((f) => f.number);
         const evenNumbers = Array.from({ length: 19 }, (_, i) => (i + 1) * 2);
         const oddNumbers = Array.from({ length: 20 }, (_, i) => i * 2 + 1);
         const sumMin = analysis.sumAnalysis.q25;
         const sumMax = analysis.sumAnalysis.q75;
         while (combinationsSet.size < quantity && attempts < maxAttempts) {
           let combo = [];
-          if (strategy === "calientes") combo = Array.from(sample(hotNumbers, 6));
-          else if (strategy === "frios") combo = Array.from(sample(coldNumbers, 6));
-          else if (strategy === "aleatorio") combo = Array.from(sample(Array.from({ length: 39 }, (_, i) => i + 1), 6));
-          else if (strategy === "3_pares_3_impares") combo = [...sample(evenNumbers, 3), ...sample(oddNumbers, 3)];
+          if (strategy === "calientes")
+            combo = Array.from(sample(hotNumbers, 6));
+          else if (strategy === "frios")
+            combo = Array.from(sample(coldNumbers, 6));
+          else if (strategy === "aleatorio")
+            combo = Array.from(
+              sample(
+                Array.from({ length: 39 }, (_, i) => i + 1),
+                6,
+              ),
+            );
+          else if (strategy === "3_pares_3_impares")
+            combo = [...sample(evenNumbers, 3), ...sample(oddNumbers, 3)];
           else if (strategy === "suma_frecuente") {
-            let tempCombo = Array.from(sample(Array.from({ length: 39 }, (_, i) => i + 1), 6));
+            let tempCombo = Array.from(
+              sample(
+                Array.from({ length: 39 }, (_, i) => i + 1),
+                6,
+              ),
+            );
             let tempSum = tempCombo.reduce((a, b) => a + b, 0);
             if (tempSum >= sumMin && tempSum <= sumMax) combo = tempCombo;
           }
@@ -1082,23 +1271,42 @@
           }
           attempts++;
         }
-        return Array.from(combinationsSet).map((c) => ({ combination: JSON.parse(c), confidence: "(Estrategia Simple)" }));
+        return Array.from(combinationsSet).map((c) => ({
+          combination: JSON.parse(c),
+          confidence: "(Estrategia Simple)",
+        }));
       }
 
       function calculatePowerRanking() {
-        const scores = Array.from({ length: 39 }, (_, i) => ({ number: i + 1, score: 0 }));
+        const scores = Array.from({ length: 39 }, (_, i) => ({
+          number: i + 1,
+          score: 0,
+        }));
         const maxFreq = analysis.frequencies[0].frequency;
-        const minFreq = analysis.frequencies[analysis.frequencies.length - 1].frequency;
-        const freqMap = new Map(analysis.frequencies.map((f) => [f.number, f.frequency]));
+        const minFreq =
+          analysis.frequencies[analysis.frequencies.length - 1].frequency;
+        const freqMap = new Map(
+          analysis.frequencies.map((f) => [f.number, f.frequency]),
+        );
         const maxLag = analysis.lags[0].lag;
         const minLag = analysis.lags[analysis.lags.length - 1].lag;
         const lagMap = new Map(analysis.lags.map((l) => [l.number, l.lag]));
         const markovScores = {};
-        const lastDrawNumbers = [lastDraw.F1, lastDraw.F2, lastDraw.F3, lastDraw.F4, lastDraw.F5, lastDraw.F6];
+        const lastDrawNumbers = [
+          lastDraw.F1,
+          lastDraw.F2,
+          lastDraw.F3,
+          lastDraw.F4,
+          lastDraw.F5,
+          lastDraw.F6,
+        ];
         for (let i = 1; i <= 39; i++) {
           let mScore = 0;
           for (const prevNum of lastDrawNumbers) {
-            if (analysis.markovTransitions[prevNum] && analysis.markovTransitions[prevNum][i]) {
+            if (
+              analysis.markovTransitions[prevNum] &&
+              analysis.markovTransitions[prevNum][i]
+            ) {
               mScore += analysis.markovTransitions[prevNum][i];
             }
           }
@@ -1106,9 +1314,13 @@
         }
         const maxMarkov = Math.max(...Object.values(markovScores));
         scores.forEach((item) => {
-          const freqScore = ((freqMap.get(item.number) || minFreq) - minFreq) / (maxFreq - minFreq);
-          const lagScore = ((lagMap.get(item.number) || minLag) - minLag) / (maxLag - minLag);
-          const markovScoreNorm = (markovScores[item.number] || 0) / (maxMarkov || 1);
+          const freqScore =
+            ((freqMap.get(item.number) || minFreq) - minFreq) /
+            (maxFreq - minFreq);
+          const lagScore =
+            ((lagMap.get(item.number) || minLag) - minLag) / (maxLag - minLag);
+          const markovScoreNorm =
+            (markovScores[item.number] || 0) / (maxMarkov || 1);
           item.score = freqScore * 0.4 + lagScore * 0.3 + markovScoreNorm * 0.3;
         });
         return scores.sort((a, b) => b.score - a.score);
@@ -1117,56 +1329,136 @@
       function displayStrategyWeights() {
         const container = document.getElementById("strategy-weights");
         if (!container) return;
-        container.innerHTML = Object.entries(strategyWeights).map(([key, val]) => `<div class="p-2 bg-gray-700 rounded-md text-center"><div class="text-xs text-gray-400">${key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</div><div class="font-bold text-lg">${val.toFixed(2)}</div></div>`).join("");
+        container.innerHTML = Object.entries(strategyWeights)
+          .map(
+            ([key, val]) =>
+              `<div class="p-2 bg-gray-700 rounded-md text-center"><div class="text-xs text-gray-400">${key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}</div><div class="font-bold text-lg">${val.toFixed(2)}</div></div>`,
+          )
+          .join("");
       }
-      
+
       function displayDiagnosticsDashboard() {
         const container = document.getElementById("diagnostics-view");
         container.innerHTML = `<h2 class="text-3xl font-bold mb-6 border-b-2 border-gray-700 pb-2"><i class="fas fa-stethoscope mr-2 text-green-400"></i>Diagnóstico del Modelo</h2><p class="text-gray-400 mb-6">Esta vista muestra la tasa de acierto histórica de cada regla individual de la "Estrategia Inteligente".</p><div id="diagnostics-content" class="space-y-4"><div class="flex justify-center items-center"><i class="fas fa-spinner fa-spin fa-2x text-indigo-400"></i><p class="ml-3">Calculando rendimiento histórico...</p></div></div>`;
         setTimeout(() => {
-          const contentContainer = document.getElementById("diagnostics-content");
+          const contentContainer = document.getElementById(
+            "diagnostics-content",
+          );
           if (!contentContainer) return;
-          const ruleHits = Object.fromEntries(Object.keys(defaultWeights).map((key) => [key, 0]));
+          const ruleHits = Object.fromEntries(
+            Object.keys(defaultWeights).map((key) => [key, 0]),
+          );
           const totalDraws = fullHistory.length;
-          const ruleToWeightMap = { "Suma en Rango": "suma_rango", "Distribución Par/Impar": "dist_par_impar", "Mix Frecuencia": "mix_frecuencia", "Mix Atraso": "mix_atraso", "Distribución Decenas": "decenas_distribucion", "Pares Frecuentes": "pares_frecuentes", "Predicción Markov": "prediccion_markov", "Consecutivos": "consecutivos", "Terminaciones": "terminaciones" };
+          const ruleToWeightMap = {
+            "Suma en Rango": "suma_rango",
+            "Distribución Par/Impar": "dist_par_impar",
+            "Mix Frecuencia": "mix_frecuencia",
+            "Mix Atraso": "mix_atraso",
+            "Distribución Decenas": "decenas_distribucion",
+            "Pares Frecuentes": "pares_frecuentes",
+            "Predicción Markov": "prediccion_markov",
+            Consecutivos: "consecutivos",
+            Terminaciones: "terminaciones",
+          };
           for (const draw of fullHistory) {
-            const combo = [draw.F1, draw.F2, draw.F3, draw.F4, draw.F5, draw.F6];
+            const combo = [
+              draw.F1,
+              draw.F2,
+              draw.F3,
+              draw.F4,
+              draw.F5,
+              draw.F6,
+            ];
             const { breakdown } = rateCombination(combo);
             Object.entries(ruleToWeightMap).forEach(([ruleName, weightKey]) => {
               if (breakdown[ruleName] > 0) ruleHits[weightKey]++;
             });
           }
-          const hitRates = Object.entries(ruleHits).map(([key, hits]) => ({ name: key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()), percentage: (hits / totalDraws) * 100, hits: hits, })).sort((a, b) => b.percentage - a.percentage);
-          contentContainer.innerHTML = hitRates.map((rule) => `<div class="stat-card p-4 rounded-lg"><div class="flex justify-between items-center mb-2"><h4 class="text-lg font-semibold text-indigo-300">${rule.name}</h4><span class="font-bold text-xl text-white">${rule.percentage.toFixed(1)}%</span></div><div class="progress-bar"><div class="progress-bar-fill" style="width: 0%;"></div></div><p class="text-right text-xs text-gray-400 mt-1">Acierto en ${rule.hits} de ${totalDraws} sorteos</p></div>`).join("");
-          contentContainer.querySelectorAll(".progress-bar-fill").forEach((bar, index) => {
-            setTimeout(() => {
-              bar.style.width = `${hitRates[index].percentage.toFixed(1)}%`;
-              bar.innerHTML = `<span class="font-semibold">${hitRates[index].percentage.toFixed(1)}%</span>`;
-            }, 50 * index);
-          });
+          const hitRates = Object.entries(ruleHits)
+            .map(([key, hits]) => ({
+              name: key
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (l) => l.toUpperCase()),
+              percentage: (hits / totalDraws) * 100,
+              hits: hits,
+            }))
+            .sort((a, b) => b.percentage - a.percentage);
+          contentContainer.innerHTML = hitRates
+            .map(
+              (rule) =>
+                `<div class="stat-card p-4 rounded-lg"><div class="flex justify-between items-center mb-2"><h4 class="text-lg font-semibold text-indigo-300">${rule.name}</h4><span class="font-bold text-xl text-white">${rule.percentage.toFixed(1)}%</span></div><div class="progress-bar"><div class="progress-bar-fill" style="width: 0%;"></div></div><p class="text-right text-xs text-gray-400 mt-1">Acierto en ${rule.hits} de ${totalDraws} sorteos</p></div>`,
+            )
+            .join("");
+          contentContainer
+            .querySelectorAll(".progress-bar-fill")
+            .forEach((bar, index) => {
+              setTimeout(() => {
+                bar.style.width = `${hitRates[index].percentage.toFixed(1)}%`;
+                bar.innerHTML = `<span class="font-semibold">${hitRates[index].percentage.toFixed(1)}%</span>`;
+              }, 50 * index);
+            });
         }, 50);
       }
-      
+
       function displayGenerator() {
         const container = document.getElementById("generator-view");
         container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Generador de Combinaciones</h2><div class="flex flex-col space-y-4"><div><label for="strategy-select" class="block mb-2 font-semibold">Elige una Estrategia:</label><select id="strategy-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="inteligente">Estrategia Inteligente (Recomendado)</option><option value="calientes">Usar Números Calientes</option><option value="frios">Usar Números Fríos</option><option value="3_pares_3_impares">3 Pares y 3 Impares</option><option value="suma_frecuente">Suma en Rango Frecuente</option><option value="aleatorio">Completamente Aleatorio</option></select></div><div id="num-balls-control" class="hidden"><label for="num-balls-select" class="block mb-2 font-semibold">Números a Jugar:</label><select id="num-balls-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="6">6 Números (Combinación Simple)</option><option value="7">7 Números</option><option value="8">8 Números</option><option value="9">9 Números</option><option value="10">10 Números</option></select></div><div id="min-confidence-control" class="hidden"> <label for="confidence-select" class="block mb-2 font-semibold">Nivel de Confianza Mínimo:</label> <select id="confidence-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><option value="90">Muy Alta (90%+)</option> <option value="80">Alta (80%+)</option> <option value="60">Media (60%+)</option> <option value="0" selected>Cualquiera</option> </select> </div><div><label for="quantity-input" class="block mb-2 font-semibold">Cantidad de Sugerencias:</label><input id="quantity-input" type="number" value="10" min="1" max="50" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"></div><button id="btn-generate" class="w-full bg-purple-600 hover:bg-purple-700 p-3 rounded-lg text-lg font-semibold">Generar</button></div><div id="results-container" class="mt-6"></div></div>`;
-        const strategySelect = document.getElementById("strategy-select"), numBallsControl = document.getElementById("num-balls-control"), confidenceControl = document.getElementById("min-confidence-control"), quantityInputLabel = document.querySelector('label[for="quantity-input"]');
-        const handleStrategyChange = () => { if (strategySelect.value === "inteligente") { numBallsControl.classList.remove("hidden"); handleNumBallsChange(); } else { numBallsControl.classList.add("hidden"); confidenceControl.classList.add("hidden"); quantityInputLabel.textContent = "Cantidad de Combinaciones:"; } };
-        const handleNumBallsChange = () => { const numBalls = parseInt(document.getElementById("num-balls-select").value); if (numBalls === 6) { confidenceControl.classList.remove("hidden"); quantityInputLabel.textContent = "Cantidad de Combinaciones:"; } else { confidenceControl.classList.add("hidden"); quantityInputLabel.textContent = "Cantidad de Grupos:"; } };
-        document.getElementById("num-balls-select").addEventListener("change", handleNumBallsChange);
+        const strategySelect = document.getElementById("strategy-select"),
+          numBallsControl = document.getElementById("num-balls-control"),
+          confidenceControl = document.getElementById("min-confidence-control"),
+          quantityInputLabel = document.querySelector(
+            'label[for="quantity-input"]',
+          );
+        const handleStrategyChange = () => {
+          if (strategySelect.value === "inteligente") {
+            numBallsControl.classList.remove("hidden");
+            handleNumBallsChange();
+          } else {
+            numBallsControl.classList.add("hidden");
+            confidenceControl.classList.add("hidden");
+            quantityInputLabel.textContent = "Cantidad de Combinaciones:";
+          }
+        };
+        const handleNumBallsChange = () => {
+          const numBalls = parseInt(
+            document.getElementById("num-balls-select").value,
+          );
+          if (numBalls === 6) {
+            confidenceControl.classList.remove("hidden");
+            quantityInputLabel.textContent = "Cantidad de Combinaciones:";
+          } else {
+            confidenceControl.classList.add("hidden");
+            quantityInputLabel.textContent = "Cantidad de Grupos:";
+          }
+        };
+        document
+          .getElementById("num-balls-select")
+          .addEventListener("change", handleNumBallsChange);
         strategySelect.addEventListener("change", handleStrategyChange);
         handleStrategyChange();
-        document.getElementById("btn-generate").addEventListener("click", handleGeneration);
+        document
+          .getElementById("btn-generate")
+          .addEventListener("click", handleGeneration);
       }
-      
+
       function handleGeneration() {
         const strategy = document.getElementById("strategy-select").value;
-        const quantity = parseInt(document.getElementById("quantity-input").value);
+        const quantity = parseInt(
+          document.getElementById("quantity-input").value,
+        );
         let results;
         if (strategy === "inteligente") {
-          const minConfidence = parseInt(document.getElementById("confidence-select").value);
-          const numBalls = parseInt(document.getElementById("num-balls-select").value);
-          results = generateIntelligentCombinations(quantity, minConfidence, numBalls);
+          const minConfidence = parseInt(
+            document.getElementById("confidence-select").value,
+          );
+          const numBalls = parseInt(
+            document.getElementById("num-balls-select").value,
+          );
+          results = generateIntelligentCombinations(
+            quantity,
+            minConfidence,
+            numBalls,
+          );
           if (results.length > 0) {
             const suggestionsToSave = results.map((r) => ({
               combinacion: JSON.stringify(r.combination),
@@ -1180,7 +1472,13 @@
               batch.set(newDocRef, sug);
             });
             try {
-              batch.commit().then(() => showNotification("Sugerencias inteligentes guardadas para futura revisión."));
+              batch
+                .commit()
+                .then(() =>
+                  showNotification(
+                    "Sugerencias inteligentes guardadas para futura revisión.",
+                  ),
+                );
             } catch (e) {
               console.error("Error al guardar sugerencias:", e);
               showNotification("Error al guardar las sugerencias.");
@@ -1190,20 +1488,34 @@
           results = generateSimpleCombinations(quantity, strategy);
         }
         const resultsContainer = document.getElementById("results-container");
-        resultsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-3">Combinaciones Sugeridas</h3>` + results.map((res) => `<div class="flex flex-col sm:flex-row items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex flex-wrap justify-center gap-2">${res.combination.map((n) => `<span class="number-ball bg-gray-600 text-white">${n}</span>`).join("")}</div><span class="text-sm text-gray-400 mt-2 sm:mt-0">${res.confidence}</span></div>`).join("");
+        resultsContainer.innerHTML =
+          `<h3 class="text-xl font-semibold mb-3">Combinaciones Sugeridas</h3>` +
+          results
+            .map(
+              (res) =>
+                `<div class="flex flex-col sm:flex-row items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex flex-wrap justify-center gap-2">${res.combination.map((n) => `<span class="number-ball bg-gray-600 text-white">${n}</span>`).join("")}</div><span class="text-sm text-gray-400 mt-2 sm:mt-0">${res.confidence}</span></div>`,
+            )
+            .join("");
       }
 
       function displayRater() {
         const container = document.getElementById("rater-view");
         container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Calificador de Combinaciones</h2><p class="text-gray-400 mb-4">Introduce 6 números para ver su calificación estadística basada en las reglas actuales.</p><div class="flex flex-col space-y-4"><input id="rater-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-rate" class="w-full bg-cyan-600 hover:bg-cyan-700 p-3 rounded-lg text-lg font-semibold">Calificar Combinación</button></div><div id="rater-results" class="mt-6"></div></div>`;
-        document.getElementById("btn-rate").addEventListener("click", handleRating);
+        document
+          .getElementById("btn-rate")
+          .addEventListener("click", handleRating);
       }
 
       function handleRating() {
         const input = document.getElementById("rater-input").value;
-        const numbers = input.split(",").map((n) => parseInt(n.trim())).filter((n) => !isNaN(n) && n >= 1 && n <= 39);
+        const numbers = input
+          .split(",")
+          .map((n) => parseInt(n.trim()))
+          .filter((n) => !isNaN(n) && n >= 1 && n <= 39);
         if (numbers.length !== 6) {
-          showNotification("Por favor, introduce exactamente 6 números válidos.");
+          showNotification(
+            "Por favor, introduce exactamente 6 números válidos.",
+          );
           return;
         }
         const uniqueNumbers = [...new Set(numbers)];
@@ -1211,8 +1523,15 @@
           showNotification("Los números deben ser únicos.");
           return;
         }
-        const { confidence, breakdown } = rateCombination(uniqueNumbers.sort((a, b) => a - b));
-        let breakdownHTML = Object.entries(breakdown).map(([rule, score]) => `<div class="flex justify-between text-sm"><span class="text-gray-300">${rule}:</span><span class="font-semibold ${score > 0 ? 'text-green-400' : 'text-gray-500'}">+${score.toFixed(2)} pts</span></div>`).join("");
+        const { confidence, breakdown } = rateCombination(
+          uniqueNumbers.sort((a, b) => a - b),
+        );
+        let breakdownHTML = Object.entries(breakdown)
+          .map(
+            ([rule, score]) =>
+              `<div class="flex justify-between text-sm"><span class="text-gray-300">${rule}:</span><span class="font-semibold ${score > 0 ? "text-green-400" : "text-gray-500"}">+${score.toFixed(2)} pts</span></div>`,
+          )
+          .join("");
         const resultsContainer = document.getElementById("rater-results");
         resultsContainer.innerHTML = ` <h3 class="text-xl font-semibold mb-3">Calificación para: [${uniqueNumbers.join(", ")}]</h3> <div class="space-y-2 p-4 bg-gray-800 rounded-md"> ${breakdownHTML} <div class="border-t border-gray-600 mt-3 pt-3 flex justify-between font-bold text-lg text-indigo-400"> <span>Confianza Final:</span> <span>${confidence.toFixed(0)}%</span> </div> </div>`;
       }
@@ -1220,29 +1539,63 @@
       function displayVerifier() {
         const container = document.getElementById("verifier-view");
         container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Verificador de Histórico (Backtesting)</h2><p class="text-gray-400 mb-4">Introduce de 6 a 10 números separados por comas para ver su rendimiento histórico.</p><div class="flex flex-col space-y-4"><input id="verifier-input" type="text" placeholder="Ej: 5, 12, 18, 22, 30, 39" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600"><button id="btn-verify" class="w-full bg-teal-600 hover:bg-teal-700 p-3 rounded-lg text-lg font-semibold">Verificar</button></div><div id="verifier-results" class="mt-6"></div></div>`;
-        document.getElementById("btn-verify").addEventListener("click", handleVerification);
+        document
+          .getElementById("btn-verify")
+          .addEventListener("click", handleVerification);
       }
 
       function handleVerification() {
         const input = document.getElementById("verifier-input").value;
-        const numbers = input.split(",").map((n) => parseInt(n.trim())).filter((n) => !isNaN(n) && n >= 1 && n <= 39);
+        const numbers = input
+          .split(",")
+          .map((n) => parseInt(n.trim()))
+          .filter((n) => !isNaN(n) && n >= 1 && n <= 39);
         if (numbers.length < 6 || numbers.length > 10) {
-          showNotification("Por favor, introduce entre 6 y 10 números válidos.");
+          showNotification(
+            "Por favor, introduce entre 6 y 10 números válidos.",
+          );
           return;
         }
         const userSet = new Set(numbers);
         const counts = { 6: 0, 5: 0, 4: 0, 3: 0, 2: 0 };
         fullHistory.forEach((draw) => {
-          const drawSet = new Set([draw.F1, draw.F2, draw.F3, draw.F4, draw.F5, draw.F6]);
+          const drawSet = new Set([
+            draw.F1,
+            draw.F2,
+            draw.F3,
+            draw.F4,
+            draw.F5,
+            draw.F6,
+          ]);
           const hits = new Set([...userSet].filter((x) => drawSet.has(x))).size;
           if (hits >= 2) counts[hits]++;
         });
         const resultsContainer = document.getElementById("verifier-results");
-        let title = numbers.length === 6 ? `Resultados para la Combinación: [${numbers.join(", ")}]` : `Resultados para el Grupo de ${numbers.length} números`;
+        let title =
+          numbers.length === 6
+            ? `Resultados para la Combinación: [${numbers.join(", ")}]`
+            : `Resultados para el Grupo de ${numbers.length} números`;
         let resultText = numbers.length === 6 ? "Aciertos de" : "Sorteos con";
-        resultsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-3">${title}</h3>${Object.entries(counts).reverse().map(([hits, count]) => `<div class="flex justify-between text-sm mb-1"><span>${resultText} <b>${hits}</b> números:</span><span class="font-semibold">${count} veces</span></div>`).join("")}`;
-        const lastWinningDraw = new Set([fullHistory[0].F1, fullHistory[0].F2, fullHistory[0].F3, fullHistory[0].F4, fullHistory[0].F5, fullHistory[0].F6]);
-        const lastDrawHits = numbers.filter((n) => lastWinningDraw.has(n)).length;
+        resultsContainer.innerHTML = `<h3 class="text-xl font-semibold mb-3">${title}</h3>${Object.entries(
+          counts,
+        )
+          .reverse()
+          .map(
+            ([hits, count]) =>
+              `<div class="flex justify-between text-sm mb-1"><span>${resultText} <b>${hits}</b> números:</span><span class="font-semibold">${count} veces</span></div>`,
+          )
+          .join("")}`;
+        const lastWinningDraw = new Set([
+          fullHistory[0].F1,
+          fullHistory[0].F2,
+          fullHistory[0].F3,
+          fullHistory[0].F4,
+          fullHistory[0].F5,
+          fullHistory[0].F6,
+        ]);
+        const lastDrawHits = numbers.filter((n) =>
+          lastWinningDraw.has(n),
+        ).length;
         resultsContainer.innerHTML += `<div class="mt-6 pt-4 border-t border-gray-600"><h4 class="text-lg font-semibold mb-2">Comparación con Último Sorteo (${fullHistory[0].sorteo})</h4><div class="flex flex-wrap justify-center gap-2 mb-2">${numbers.map((n) => `<span class="number-ball ${lastWinningDraw.has(n) ? "bg-green-500" : "bg-gray-600"} text-white">${n}</span>`).join("")}</div><p class="text-center font-bold">Tuviste ${lastDrawHits} aciertos.</p></div>`;
       }
 
@@ -1250,7 +1603,12 @@
         const container = document.getElementById("reviewer-view");
         container.innerHTML = `<div class="stat-card p-6 rounded-lg"><h2 class="text-2xl font-bold mb-4">Revisar Sugerencias Pasadas</h2><div id="reviewer-content">Cargando sugerencias...</div></div>`;
         try {
-          const suggestionsSnapshot = await getDocs(query(suggestionsCollectionRef, orderBy("sorteo_sugerido_para", "desc")));
+          const suggestionsSnapshot = await getDocs(
+            query(
+              suggestionsCollectionRef,
+              orderBy("sorteo_sugerido_para", "desc"),
+            ),
+          );
           const suggestionsByDraw = {};
           suggestionsSnapshot.docs.forEach((doc) => {
             const data = doc.data();
@@ -1259,17 +1617,28 @@
             suggestionsByDraw[key].push(data);
           });
           if (Object.keys(suggestionsByDraw).length === 0) {
-            document.getElementById("reviewer-content").innerHTML = `<p class="text-gray-400">No se encontraron sugerencias guardadas. Genera algunas con la "Estrategia Inteligente" primero.</p>`;
+            document.getElementById("reviewer-content").innerHTML =
+              `<p class="text-gray-400">No se encontraron sugerencias guardadas. Genera algunas con la "Estrategia Inteligente" primero.</p>`;
             return;
           }
-          let optionsHTML = Object.keys(suggestionsByDraw).sort((a, b) => b - a).map((drawNum) => `<option value="${drawNum}">Sorteo ${drawNum}</option>`).join("");
-          document.getElementById("reviewer-content").innerHTML = ` <div class="flex flex-col space-y-4"> <label for="review-draw-select" class="block mb-2 font-semibold">Selecciona un sorteo para revisar:</label> <select id="review-draw-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600">${optionsHTML}</select> <div id="review-results-area" class="mt-6 space-y-4"></div> </div>`;
+          let optionsHTML = Object.keys(suggestionsByDraw)
+            .sort((a, b) => b - a)
+            .map(
+              (drawNum) =>
+                `<option value="${drawNum}">Sorteo ${drawNum}</option>`,
+            )
+            .join("");
+          document.getElementById("reviewer-content").innerHTML =
+            ` <div class="flex flex-col space-y-4"> <label for="review-draw-select" class="block mb-2 font-semibold">Selecciona un sorteo para revisar:</label> <select id="review-draw-select" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600">${optionsHTML}</select> <div id="review-results-area" class="mt-6 space-y-4"></div> </div>`;
           const select = document.getElementById("review-draw-select");
-          select.addEventListener("change", (e) => handleReviewSelection(e.target.value, suggestionsByDraw));
+          select.addEventListener("change", (e) =>
+            handleReviewSelection(e.target.value, suggestionsByDraw),
+          );
           handleReviewSelection(select.value, suggestionsByDraw);
         } catch (e) {
           console.error("Error cargando sugerencias:", e);
-          document.getElementById("reviewer-content").innerHTML = `<p class="text-red-500">Error al cargar las sugerencias.</p>`;
+          document.getElementById("reviewer-content").innerHTML =
+            `<p class="text-red-500">Error al cargar las sugerencias.</p>`;
         }
       }
 
@@ -1282,18 +1651,50 @@
           reviewArea.innerHTML = `<p class="text-yellow-400">Aún no se ha cargado el resultado del sorteo ${drawNumber}.</p>`;
           return;
         }
-        const winningCombo = [winningDraw.F1, winningDraw.F2, winningDraw.F3, winningDraw.F4, winningDraw.F5, winningDraw.F6].sort((a, b) => a - b);
+        const winningCombo = [
+          winningDraw.F1,
+          winningDraw.F2,
+          winningDraw.F3,
+          winningDraw.F4,
+          winningDraw.F5,
+          winningDraw.F6,
+        ].sort((a, b) => a - b);
         let html = `<h3 class="text-xl font-bold text-indigo-400">Resultado Real del Sorteo ${drawNumber}</h3><div class="flex flex-wrap justify-center sm:justify-start gap-2 my-2">${winningCombo.map((n) => `<span class="number-ball bg-green-600 text-white">${n}</span>`).join("")}</div>`;
         suggestions.forEach((sug) => {
           let suggestedCombo;
           try {
-            suggestedCombo = typeof sug.combinacion === "string" ? JSON.parse(sug.combinacion) : (Array.isArray(sug.combinacion) ? sug.combinacion : null);
+            suggestedCombo =
+              typeof sug.combinacion === "string"
+                ? JSON.parse(sug.combinacion)
+                : Array.isArray(sug.combinacion)
+                  ? sug.combinacion
+                  : null;
             if (!suggestedCombo) return;
-          } catch (e) { return; }
-          const hits = suggestedCombo.filter((n) => winningCombo.includes(n)).length;
+          } catch (e) {
+            return;
+          }
+          const hits = suggestedCombo.filter((n) =>
+            winningCombo.includes(n),
+          ).length;
           const { breakdown: sugBreakdown } = rateCombination(suggestedCombo);
           const { breakdown: winBreakdown } = rateCombination(winningCombo);
-          html += ` <div class="p-4 bg-gray-800 rounded-lg border border-gray-700"> <div class="flex flex-col sm:flex-row justify-between items-center"> <div class="flex flex-wrap justify-center gap-2">${suggestedCombo.map((n) => `<span class="number-ball ${winningCombo.includes(n) ? "bg-green-500" : "bg-gray-600"} text-white">${n}</span>`).join("")}</div> <div class="text-center sm:text-right mt-3 sm:mt-0"> <p class="text-lg font-bold">${hits} de ${suggestedCombo.length} aciertos</p> <p class="text-sm text-gray-400">${sug.confidence}</p> </div> </div> <div class="mt-4 pt-4 border-t border-gray-600 text-xs grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2"> <div> <h4 class="font-semibold mb-1 text-gray-300">Análisis de la Sugerencia:</h4> ${Object.entries(sugBreakdown).map(([rule, score]) => `<p class="${score > 0 ? "text-green-400" : "text-red-400"}">${rule}: ${score > 0 ? "✔️ Acierto" : "❌ Fallo"}</p>`).join("")} </div> <div class="mt-2 md:mt-0"> <h4 class="font-semibold mb-1 text-gray-300">Análisis del Ganador:</h4> ${Object.entries(winBreakdown).map(([rule, score]) => `<p class="${score > 0 ? "text-green-400" : "text-red-400"}">${rule}: ${score > 0 ? "✔️ Acierto" : "❌ Fallo"}</p>`).join("")} </div> </div> </div> `;
+          html += ` <div class="p-4 bg-gray-800 rounded-lg border border-gray-700"> <div class="flex flex-col sm:flex-row justify-between items-center"> <div class="flex flex-wrap justify-center gap-2">${suggestedCombo.map((n) => `<span class="number-ball ${winningCombo.includes(n) ? "bg-green-500" : "bg-gray-600"} text-white">${n}</span>`).join("")}</div> <div class="text-center sm:text-right mt-3 sm:mt-0"> <p class="text-lg font-bold">${hits} de ${suggestedCombo.length} aciertos</p> <p class="text-sm text-gray-400">${sug.confidence}</p> </div> </div> <div class="mt-4 pt-4 border-t border-gray-600 text-xs grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2"> <div> <h4 class="font-semibold mb-1 text-gray-300">Análisis de la Sugerencia:</h4> ${Object.entries(
+            sugBreakdown,
+          )
+            .map(
+              ([rule, score]) =>
+                `<p class="${score > 0 ? "text-green-400" : "text-red-400"}">${rule}: ${score > 0 ? "✔️ Acierto" : "❌ Fallo"}</p>`,
+            )
+            .join(
+              "",
+            )} </div> <div class="mt-2 md:mt-0"> <h4 class="font-semibold mb-1 text-gray-300">Análisis del Ganador:</h4> ${Object.entries(
+            winBreakdown,
+          )
+            .map(
+              ([rule, score]) =>
+                `<p class="${score > 0 ? "text-green-400" : "text-red-400"}">${rule}: ${score > 0 ? "✔️ Acierto" : "❌ Fallo"}</p>`,
+            )
+            .join("")} </div> </div> </div> `;
         });
         reviewArea.innerHTML = html;
       }
@@ -1302,19 +1703,34 @@
         const container = document.getElementById("predictions-view");
         container.innerHTML = `<h2 class="text-2xl font-bold mb-4">Predicciones del Modelo (Markov)</h2><p class="text-gray-400 mb-6">Basado en el último sorteo, estos son los 5 números con mayor probabilidad de aparecer a continuación de cada número ganador.</p><div id="predictions-content" class="space-y-4"></div>`;
         let predictionsContent = "";
-        const lastDrawNumbers = [lastDraw.F1, lastDraw.F2, lastDraw.F3, lastDraw.F4, lastDraw.F5, lastDraw.F6];
+        const lastDrawNumbers = [
+          lastDraw.F1,
+          lastDraw.F2,
+          lastDraw.F3,
+          lastDraw.F4,
+          lastDraw.F5,
+          lastDraw.F6,
+        ];
         lastDrawNumbers.forEach((num) => {
           predictionsContent += `<div class="flex items-center gap-4"> <span class="number-ball bg-indigo-600 text-white">${num}</span> <i class="fas fa-arrow-right text-gray-400"></i> <div class="flex flex-wrap gap-2">`;
           const transitions = analysis.markovTransitions[num];
           if (transitions) {
-            const top5 = Object.entries(transitions).sort(([, a], [, b]) => b - a).slice(0, 5);
-            predictionsContent += top5.map(([nextNum, count]) => `<span class="number-ball bg-gray-600 text-white">${nextNum}</span>`).join("");
+            const top5 = Object.entries(transitions)
+              .sort(([, a], [, b]) => b - a)
+              .slice(0, 5);
+            predictionsContent += top5
+              .map(
+                ([nextNum, count]) =>
+                  `<span class="number-ball bg-gray-600 text-white">${nextNum}</span>`,
+              )
+              .join("");
           } else {
             predictionsContent += `<span class="text-sm text-gray-500">Sin datos de transición</span>`;
           }
           predictionsContent += `</div></div>`;
         });
-        document.getElementById("predictions-content").innerHTML = predictionsContent;
+        document.getElementById("predictions-content").innerHTML =
+          predictionsContent;
       }
 
       async function displayTopGlobal() {
@@ -1322,17 +1738,29 @@
         container.innerHTML = `<h2 class="text-2xl font-bold mb-4">Top 100 Global (Fuerza Bruta)</h2><p class="text-gray-400 mb-6">Estas son las mejores combinaciones encontradas después de analizar los 3.2 millones de posibilidades. Para actualizar esta lista, ejecuta el script de Python localmente.</p><div id="top-global-results" class="space-y-2">Cargando ranking...</div>`;
         const resultsContainer = document.getElementById("top-global-results");
         try {
-          const querySnapshot = await getDocs(query(bruteForceResultsCollectionRef, orderBy("confidence", "desc"), limit(100)));
+          const querySnapshot = await getDocs(
+            query(
+              bruteForceResultsCollectionRef,
+              orderBy("confidence", "desc"),
+              limit(100),
+            ),
+          );
           if (querySnapshot.empty) {
             resultsContainer.innerHTML = `<p class="text-yellow-400 text-center">No se encontraron resultados de fuerza bruta. Por favor, ejecuta el script de Python localmente para generar el ranking.</p>`;
             return;
           }
           const topResults = querySnapshot.docs.map((doc) => doc.data());
-          resultsContainer.innerHTML = topResults.map((res) => {
-            let combination;
-            try { combination = JSON.parse(res.combination) } catch (e) { combination = [] }
-            return `<div class="flex flex-col sm:flex-row items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex flex-wrap justify-center gap-2">${combination.map((n) => `<span class="number-ball bg-gray-600 text-white">${n}</span>`).join("")}</div><span class="text-sm text-yellow-400 font-bold mt-2 sm:mt-0">Confianza: ${res.confidence.toFixed(2)}%</span></div>`
-          }).join("");
+          resultsContainer.innerHTML = topResults
+            .map((res) => {
+              let combination;
+              try {
+                combination = JSON.parse(res.combination);
+              } catch (e) {
+                combination = [];
+              }
+              return `<div class="flex flex-col sm:flex-row items-center justify-between p-2 rounded-md mb-2 bg-gray-800"><div class="flex flex-wrap justify-center gap-2">${combination.map((n) => `<span class="number-ball bg-gray-600 text-white">${n}</span>`).join("")}</div><span class="text-sm text-yellow-400 font-bold mt-2 sm:mt-0">Confianza: ${res.confidence.toFixed(2)}%</span></div>`;
+            })
+            .join("");
         } catch (error) {
           console.error("Error al cargar Top Global:", error);
           resultsContainer.innerHTML = `<p class="text-red-500 text-center">Error al cargar el ranking. Revisa la consola.</p>`;
@@ -1341,42 +1769,89 @@
 
       function showNotification(message) {
         document.getElementById("notification-message").innerText = message;
-        document.getElementById("notification-modal").classList.remove("hidden");
+        document
+          .getElementById("notification-modal")
+          .classList.remove("hidden");
       }
 
       function showConfirmation(message, onConfirm) {
-        const modal = document.getElementById("confirmation-modal"), messageEl = document.getElementById("confirmation-message"), confirmBtn = document.getElementById("btn-confirm-action"), cancelBtn = document.getElementById("btn-cancel-action");
+        const modal = document.getElementById("confirmation-modal"),
+          messageEl = document.getElementById("confirmation-message"),
+          confirmBtn = document.getElementById("btn-confirm-action"),
+          cancelBtn = document.getElementById("btn-cancel-action");
         messageEl.textContent = message;
-        const confirmHandler = () => { onConfirm(); modal.classList.add("hidden"); confirmBtn.removeEventListener("click", confirmHandler); cancelBtn.removeEventListener("click", cancelHandler); };
-        const cancelHandler = () => { modal.classList.add("hidden"); confirmBtn.removeEventListener("click", confirmHandler); cancelBtn.removeEventListener("click", cancelHandler); };
+        const confirmHandler = () => {
+          onConfirm();
+          modal.classList.add("hidden");
+          confirmBtn.removeEventListener("click", confirmHandler);
+          cancelBtn.removeEventListener("click", cancelHandler);
+        };
+        const cancelHandler = () => {
+          modal.classList.add("hidden");
+          confirmBtn.removeEventListener("click", confirmHandler);
+          cancelBtn.removeEventListener("click", cancelHandler);
+        };
         confirmBtn.addEventListener("click", confirmHandler);
         cancelBtn.addEventListener("click", cancelHandler);
         modal.classList.remove("hidden");
       }
 
-      function showRecalculateConfirmation() { showConfirmation("¿Estás seguro? Esto recalculará los pesos de la estrategia basándose en el historial completo. El aprendizaje manual se perderá.", calculateAndSetIdealWeights); }
+      function showRecalculateConfirmation() {
+        showConfirmation(
+          "¿Estás seguro? Esto recalculará los pesos de la estrategia basándose en el historial completo. El aprendizaje manual se perderá.",
+          calculateAndSetIdealWeights,
+        );
+      }
 
       async function calculateAndSetIdealWeights() {
         if (fullHistory.length < 10) {
-          showNotification("Se necesitan al menos 10 sorteos en el histórico para calcular pesos fiables.");
+          showNotification(
+            "Se necesitan al menos 10 sorteos en el histórico para calcular pesos fiables.",
+          );
           return;
         }
         showNotification("Calculando pesos ideales basados en el histórico...");
         const totalDraws = fullHistory.length;
-        const ruleHits = Object.fromEntries(Object.keys(defaultWeights).map((key) => [key, 0]));
-        const ruleToWeightMap = { "Suma en Rango": "suma_rango", "Distribución Par/Impar": "dist_par_impar", "Mix Frecuencia": "mix_frecuencia", "Mix Atraso": "mix_atraso", "Distribución Decenas": "decenas_distribucion", "Pares Frecuentes": "pares_frecuentes", "Predicción Markov": "prediccion_markov", "Consecutivos": "consecutivos", "Terminaciones": "terminaciones" };
+        const ruleHits = Object.fromEntries(
+          Object.keys(defaultWeights).map((key) => [key, 0]),
+        );
+        const ruleToWeightMap = {
+          "Suma en Rango": "suma_rango",
+          "Distribución Par/Impar": "dist_par_impar",
+          "Mix Frecuencia": "mix_frecuencia",
+          "Mix Atraso": "mix_atraso",
+          "Distribución Decenas": "decenas_distribucion",
+          "Pares Frecuentes": "pares_frecuentes",
+          "Predicción Markov": "prediccion_markov",
+          Consecutivos: "consecutivos",
+          Terminaciones: "terminaciones",
+        };
         for (const draw of fullHistory) {
-          const combo = [draw.F1, draw.F2, draw.F3, draw.F4, draw.F5, draw.F6].sort((a, b) => a - b);
+          const combo = [
+            draw.F1,
+            draw.F2,
+            draw.F3,
+            draw.F4,
+            draw.F5,
+            draw.F6,
+          ].sort((a, b) => a - b);
           const { breakdown } = rateCombination(combo);
           Object.entries(ruleToWeightMap).forEach(([ruleName, weightKey]) => {
             if (breakdown[ruleName] > 0) ruleHits[weightKey]++;
           });
         }
         const hitRates = {};
-        Object.keys(ruleHits).forEach((key) => { hitRates[key] = ruleHits[key] / totalDraws; });
-        const totalRate = Object.values(hitRates).reduce((sum, rate) => sum + rate, 0);
+        Object.keys(ruleHits).forEach((key) => {
+          hitRates[key] = ruleHits[key] / totalDraws;
+        });
+        const totalRate = Object.values(hitRates).reduce(
+          (sum, rate) => sum + rate,
+          0,
+        );
         const idealWeights = {};
-        Object.keys(hitRates).forEach((key) => { idealWeights[key] = (hitRates[key] / totalRate) * 100; });
+        Object.keys(hitRates).forEach((key) => {
+          idealWeights[key] = (hitRates[key] / totalRate) * 100;
+        });
         try {
           await setDoc(configDocRef, idealWeights);
           strategyWeights = { ...idealWeights };
@@ -1387,12 +1862,43 @@
           showNotification("No se pudieron guardar los nuevos pesos.");
         }
       }
-      
+
       // --- HELPER FUNCTIONS ---
-      function combinations(arr, k) { let result = []; function backtrack(start, currentCombo) { if (currentCombo.length === k) { result.push([...currentCombo]); return; } for (let i = start; i < arr.length; i++) { currentCombo.push(arr[i]); backtrack(i + 1, currentCombo); currentCombo.pop(); } } backtrack(0, []); return result; }
-      function percentile(arr, p) { if (arr.length === 0) return 0; const sorted = [...arr].sort((a, b) => a - b); const pos = (sorted.length - 1) * (p / 100); const base = Math.floor(pos); const rest = pos - base; if (sorted[base + 1] !== undefined) { return sorted[base] + rest * (sorted[base + 1] - sorted[base]); } else { return sorted[base]; } }
-      function sample(arr, k) { const shuffled = [...arr].sort(() => 0.5 - Math.random()); return new Set(shuffled.slice(0, k)); }
-      function sum(arr) { return arr.reduce((a, b) => a + b, 0); }
+      function combinations(arr, k) {
+        let result = [];
+        function backtrack(start, currentCombo) {
+          if (currentCombo.length === k) {
+            result.push([...currentCombo]);
+            return;
+          }
+          for (let i = start; i < arr.length; i++) {
+            currentCombo.push(arr[i]);
+            backtrack(i + 1, currentCombo);
+            currentCombo.pop();
+          }
+        }
+        backtrack(0, []);
+        return result;
+      }
+      function percentile(arr, p) {
+        if (arr.length === 0) return 0;
+        const sorted = [...arr].sort((a, b) => a - b);
+        const pos = (sorted.length - 1) * (p / 100);
+        const base = Math.floor(pos);
+        const rest = pos - base;
+        if (sorted[base + 1] !== undefined) {
+          return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+        } else {
+          return sorted[base];
+        }
+      }
+      function sample(arr, k) {
+        const shuffled = [...arr].sort(() => 0.5 - Math.random());
+        return new Set(shuffled.slice(0, k));
+      }
+      function sum(arr) {
+        return arr.reduce((a, b) => a + b, 0);
+      }
     </script>
   </body>
 </html>
