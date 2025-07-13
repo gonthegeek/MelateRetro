@@ -1,0 +1,15 @@
+Project Description: Melate Retro Statistical Analyzer
+
+Project Overview
+
+This project is a fully-automated statistical analysis platform for the "Melate Retro" lottery, designed to provide users with data-driven insights that surpass simple random selection. The core of the system is a highly efficient data processing pipeline built on GitHub Actions, which automates web scraping for new results (firebase_scraper.py), pre-computes all complex statistical models (precompute_analysis.py), and runs a brute-force analysis (brute_force_analyzer.py) to rank all 3.2 million possible combinations. The results are served to a vanilla JavaScript and Tailwind CSS frontend via a Firebase backend (Firestore, Authentication, Hosting). Key user-facing features include an interactive dashboard for historical data, a 9-rule weighted engine for scoring combinations, and tools to generate, rate, and backtest potential plays against past results.
+
+Next Steps
+
+Implement Monetization and Subscription Management: The immediate priority is to make the project commercially viable. This involves integrating a payment gateway (e.g., Stripe) and building the logic within Firebase to manage user subscription tiers. This includes creating a "premium" user role, gating access to advanced features like the brute-force rankings and unlimited "intelligent" generation, and handling subscription lifecycle events (activation, cancellation, etc.).
+
+Refactor Frontend Codebase and Enhance UX: The current index.html contains a large, monolithic block of JavaScript that is becoming difficult to maintain. The first step is to refactor this code into distinct ES modules (e.g., ui.js, firestoreApi.js, ratingEngine.js, state.js) to improve organization and scalability. Concurrently, the user experience should be enhanced by replacing data tables with interactive charts (using a library like Chart.js) to visualize statistical distributions, making the data more intuitive and engaging for users.
+
+Develop a Machine Learning Model for Weight Optimization: The current strategy-weighting system relies on basic heuristics. The next major evolution is to replace this with a proper machine learning model. This involves creating a historical training dataset where winning combinations are labeled as positive examples and a large sample of random combinations are negative examples. A classification model (e.g., Logistic Regression or XGBoost) can then be trained on the 9 rule outputs to learn the optimal weights automatically, making the core rating engine truly data-driven and predictive.
+
+Introduce a Centralized State Management Pattern: The frontend currently relies on global JavaScript variables to manage state (analysis, fullHistory, etc.), which is fragile and error-prone. A simple, centralized state object or pattern should be implemented. All functions should read from this single source of truth, and mutations should be handled by dedicated functions. This will make the application's behavior more predictable and simplify debugging as new features are added.

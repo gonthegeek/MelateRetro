@@ -1,0 +1,24 @@
+# .pre-commit-config.yaml
+# A unified configuration for Python, JS, HTML, and more.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.0
+    hooks:
+      - id: flake8
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        # Run prettier on all relevant frontend and config files
+        types_or:
+          [javascript, jsx, ts, tsx, json, css, scss, html, yaml, markdown]
