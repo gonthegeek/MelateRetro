@@ -1,0 +1,33 @@
+name: Update Master Plan
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  update-plan:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'feature/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Get Feature Name from Branch
+        id: get_feature
+        run: echo "name=$(echo ${{ github.event.pull_request.head.ref }} | cut -d'/' -f2)" >> $GITHUB_OUTPUT
+
+      - name: Mark Task as Complete in Plan
+        run: |
+          FEATURE_NAME="${{ steps.get_feature.outputs.name }}"
+          SAFE_FEATURE_NAME=$(printf '%s\n' "$FEATURE_NAME" | sed 's/[&/\\^$*.[()]/\\&/g')
+          sed -i "s/- \[ \] \(.*${SAFE_FEATURE_NAME}.*\)/- \[x\] \1/" PROJECT_CONTEXT.md
+      
+      - name: Commit and Push Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs(plan): Mark '${{ steps.get_feature.outputs.name }}' as complete"
+          branch: main
+          file_pattern: PROJECT_CONTEXT.md
