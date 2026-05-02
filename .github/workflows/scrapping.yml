@@ -4,7 +4,7 @@ name: Actualizar y Pre-Computar Resultados
 
 on:
   schedule:
-    - cron: '0 10 * * 0,3' # Domingo y Miércoles
+    - cron: "0 10 * * 0,3" # Domingo y Miércoles
   workflow_dispatch:
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
       - name: Configurar Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Instalar dependencias
         run: |

@@ -24,7 +24,7 @@ jobs:
           FEATURE_NAME="${{ steps.get_feature.outputs.name }}"
           SAFE_FEATURE_NAME=$(printf '%s\n' "$FEATURE_NAME" | sed 's/[&/\\^$*.[()]/\\&/g')
           sed -i "s/- \[ \] \(.*${SAFE_FEATURE_NAME}.*\)/- \[x\] \1/" PROJECT_CONTEXT.md
-      
+
       - name: Commit and Push Changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
