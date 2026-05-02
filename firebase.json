@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "analizadormelateretro",
     "public": "public",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
